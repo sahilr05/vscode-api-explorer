@@ -107,7 +107,7 @@ Source navigation currently works with FastAPI only. Support for other framework
 
 API Explorer is open source. Issues and PRs are welcome.
 
-[GitHub →](https://github.com/YOUR_USERNAME/api-explorer)
+[GitHub →](https://github.com/sahilr05/vscode-api-explorer)
 
 ---
 
