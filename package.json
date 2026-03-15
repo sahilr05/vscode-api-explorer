@@ -4,8 +4,9 @@
   "description": "Zero-config API explorer for FastAPI and OpenAPI projects. Auto-discovers endpoints, fires requests, and navigates to source - without leaving VSCode.",
   "version": "0.1.0",
   "private": false,
-  "publisher": "YOUR_PUBLISHER_ID",
+  "publisher": "sahilrajpal",
   "author": "Sahil Rajpal",
+  "preview": true,
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -54,6 +55,11 @@
       }
     },
     "commands": [
+      {
+        "command": "apiExplorer.filterByModule",
+        "title": "Filter by Module",
+        "icon": "$(folder-library)"
+      },
       {
         "command": "apiExplorer.refresh",
         "title": "Refresh",
@@ -162,19 +168,24 @@
           "group": "navigation@3"
         },
         {
-          "command": "apiExplorer.filterByMethod",
+          "command": "apiExplorer.filterByModule",
           "when": "view == apiExplorer.endpoints",
           "group": "navigation@4"
         },
         {
-          "command": "apiExplorer.toggleSort",
+          "command": "apiExplorer.filterByMethod",
           "when": "view == apiExplorer.endpoints",
           "group": "navigation@5"
         },
         {
-          "command": "apiExplorer.refresh",
+          "command": "apiExplorer.toggleSort",
           "when": "view == apiExplorer.endpoints",
           "group": "navigation@6"
+        },
+        {
+          "command": "apiExplorer.refresh",
+          "when": "view == apiExplorer.endpoints",
+          "group": "navigation@7"
         },
         {
           "command": "apiExplorer.clearHistory",

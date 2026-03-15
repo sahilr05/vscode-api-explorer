@@ -162,6 +162,36 @@ export function activate(context: vscode.ExtensionContext) {
         }
     )
 
+    const filterModuleCommand = vscode.commands.registerCommand(
+        'apiExplorer.filterByModule',
+        async () => {
+            const allModules = treeProvider.allModules
+            if (allModules.length === 0) {
+                vscode.window.showInformationMessage('API Explorer: No modules detected yet — load a spec first.')
+                return
+            }
+
+            const current = treeProvider.moduleFilters
+            const items   = allModules.map(m => ({
+                label:  m,
+                picked: current.size === 0 ? true : current.has(m),
+            }))
+
+            const picked = await vscode.window.showQuickPick(items, {
+                canPickMany: true,
+                title:       "Filter by Module",
+                placeHolder: "Select modules to show (all = no filter)",
+            })
+
+            if (!picked) return
+            treeProvider.setModuleFilters(
+                picked.length === allModules.length || picked.length === 0
+                    ? new Set()
+                    : new Set(picked.map(p => p.label))
+            )
+        }
+    )
+
     const toggleSortCommand = vscode.commands.registerCommand(
         'apiExplorer.toggleSort',
         () => {
@@ -174,7 +204,7 @@ export function activate(context: vscode.ExtensionContext) {
     )
 
     // ── Initial context ───────────────────────────────────────────────────────
-    vscode.commands.executeCommand('setContext', 'apiExplorer.groupMode', 'method')
+    vscode.commands.executeCommand('setContext', 'apiExplorer.groupMode', 'module')
     vscode.commands.executeCommand('setContext', 'apiExplorer.searchActive', false)
 
     context.subscriptions.push(
@@ -183,7 +213,8 @@ export function activate(context: vscode.ExtensionContext) {
         openRequestCommand, openFromHistoryCommand, clearHistoryCommand,
         goToSourceCommand,
         groupByMethodCommand, groupByModuleCommand,
-        filterMethodCommand, toggleSortCommand,
+        filterMethodCommand, filterModuleCommand,
+        toggleSortCommand,
         config,
     )
 }

@@ -2,7 +2,7 @@
 
 ## 🐛 Known Bugs
 
-- [ ] **Duplicate API calls when multiple tabs open for same endpoint** — if 3 panels exist for the same route and a request is fired, all 3 message handlers respond. Fix: `_attachHandler` should dispose the previous listener before attaching a new one, or panels should be strictly deduplicated so 3 tabs can never exist for the same key.
+- [x] **Duplicate API calls when multiple tabs open for same endpoint** — if 3 panels exist for the same route and a request is fired, all 3 message handlers respond. Fix: `_attachHandler` should dispose the previous listener before attaching a new one, or panels should be strictly deduplicated so 3 tabs can never exist for the same key.
 
 - [ ] **Sort doesn't work within module groups** — `toggleSort` sorts the group list alphabetically but endpoints *within* each module group are not sorted. Fix: apply `_sortMode` inside the `getChildren` branch for `ModuleGroupItem`, same way it's applied in `_visibleEndpoints`.
 

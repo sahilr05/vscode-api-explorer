@@ -26,9 +26,10 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
 
     private _endpoints:     ApiEndpoint[] = []
     private _searchQuery:   string        = ""
-    private _groupMode:     GroupMode     = "method"
+    private _groupMode:     GroupMode     = "module"
     private _sortMode:      SortMode      = "default"
     private _methodFilters: Set<string>   = new Set()
+    private _moduleFilters: Set<string>   = new Set() // empty = show all modules
 
     private _onDidChangeTreeData = new vscode.EventEmitter<void>()
     readonly onDidChangeTreeData: vscode.Event<void> = this._onDidChangeTreeData.event
@@ -54,7 +55,10 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
 
     setSortMode(mode: SortMode) {
         this._sortMode = mode
+        // Fire twice — first clears the cached tree, second rebuilds it
+        // This forces VSCode to re-request children for all expanded nodes
         this._onDidChangeTreeData.fire()
+        setTimeout(() => this._onDidChangeTreeData.fire(), 50)
     }
 
     setMethodFilters(methods: Set<string>) {
@@ -62,9 +66,21 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
         this._onDidChangeTreeData.fire()
     }
 
+    setModuleFilters(modules: Set<string>) {
+        this._moduleFilters = modules
+        this._onDidChangeTreeData.fire()
+    }
+
     get groupMode():     GroupMode   { return this._groupMode }
     get sortMode():      SortMode    { return this._sortMode }
     get methodFilters(): Set<string> { return this._methodFilters }
+    get moduleFilters(): Set<string> { return this._moduleFilters }
+
+    // Returns all unique module names from the loaded endpoints
+    // Used by the filter command to populate the QuickPick
+    get allModules(): string[] {
+        return [...new Set(this._endpoints.map(e => inferModule(e.path)))].sort()
+    }
 
     refresh(): void { this._onDidChangeTreeData.fire() }
 
@@ -82,7 +98,10 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
                 return [new InfoItem(`No matches for "${this._searchQuery}"`, "search")]
             }
             if (visible.length === 0 && this._methodFilters.size > 0) {
-                return [new InfoItem("No endpoints match the active filter", "filter")]
+                return [new InfoItem("No endpoints match the active method filter", "filter")]
+            }
+            if (visible.length === 0 && this._moduleFilters.size > 0) {
+                return [new InfoItem("No endpoints match the active module filter", "folder")]
             }
             return this._groupMode === "method"
                 ? this._groupByMethod(visible)
@@ -96,9 +115,13 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
         }
 
         if (element instanceof ModuleGroupItem) {
-            return this._visibleEndpoints()
+            const children = this._visibleEndpoints()
                 .filter(e => inferModule(e.path) === element.moduleName)
-                .map(e => new EndpointItem(e))
+            // Explicit sort here in case _visibleEndpoints cache is stale
+            if (this._sortMode === "alpha") {
+                children.sort((a, b) => a.path.localeCompare(b.path))
+            }
+            return children.map(e => new EndpointItem(e))
         }
 
         return []
@@ -109,6 +132,10 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
 
         if (this._methodFilters.size > 0) {
             list = list.filter(e => this._methodFilters.has(e.method))
+        }
+
+        if (this._moduleFilters.size > 0) {
+            list = list.filter(e => this._moduleFilters.has(inferModule(e.path)))
         }
 
         if (this._searchQuery) {
