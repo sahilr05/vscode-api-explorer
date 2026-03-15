@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" fill="none">
+  <!-- Outer ring -->
+  <circle cx="64" cy="64" r="52" stroke="#cccccc" stroke-width="5" fill="none" opacity="0.15"/>
+  <!-- Left plug prong top -->
+  <rect x="38" y="18" width="8" height="20" rx="2" fill="#cccccc" opacity="0.9"/>
+  <!-- Left plug prong bottom -->
+  <rect x="54" y="18" width="8" height="20" rx="2" fill="#cccccc" opacity="0.9"/>
+  <!-- Left plug body -->
+  <rect x="30" y="36" width="40" height="26" rx="5" fill="#cccccc" opacity="0.9"/>
+  <!-- Left plug pin -->
+  <rect x="47" y="62" width="6" height="16" rx="3" fill="#cccccc" opacity="0.7"/>
+  <!-- Right socket body -->
+  <rect x="58" y="70" width="40" height="26" rx="5" fill="#007acc"/>
+  <!-- Right socket pin hole 1 -->
+  <rect x="67" y="62" width="6" height="12" rx="3" fill="#007acc"/>
+  <!-- Right socket pin hole 2 -->
+  <rect x="79" y="62" width="6" height="12" rx="3" fill="#007acc"/>
+  <!-- Horizontal connector line -->
+  <line x1="50" y1="75" x2="58" y2="83" stroke="#007acc" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Lightning bolt overlay -->
+  <path d="M67 48 L58 64 L65 64 L56 82 L74 62 L66 62 Z" fill="#10b981" opacity="0.95"/>
+</svg>

@@ -1,0 +1,8 @@
+<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <!-- < bracket -->
+  <path d="M7 7L3 12L7 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- > bracket -->
+  <path d="M17 7L21 12L17 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- / slash -->
+  <line x1="14" y1="5" x2="10" y2="19" stroke="white" stroke-width="2" stroke-linecap="round"/>
+</svg>
