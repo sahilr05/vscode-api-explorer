@@ -21,7 +21,7 @@ Point it at your server once. API Explorer fetches `/openapi.json`, parses every
 
 The base URL is stored per-workspace — each project on your machine remembers its own server.
 
-![Request panel showing POST /module-a/ with pre-filled request body and expected response schema](images/request-panel.jpg)
+![Request panel showing POST /module-a/ with pre-filled request body and expected response schema](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/request-panel.jpg)
 
 ---
 
@@ -35,15 +35,16 @@ The expected response schema is shown as a read-only preview below the request b
 ### Group by module or method
 View your endpoints grouped by HTTP method, or switch to module view — which infers groupings from your URL structure automatically. `/auth/login`, `/auth/me` → `auth`. `/module-a/`, `/module-a/{item_id}` → `module-a`.
 
-![Sidebar showing endpoints grouped by module: auth, module-a, module-b](images/module-grouping.jpg)
+![Sidebar showing endpoints grouped by module: auth, module-a, module-b](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/module-grouping.jpg)
 
 ---
 
 ### Filter, search, sort
-Filter by HTTP method with a native multi-select. Live search by path or description. Toggle between spec order and A→Z. All from the sidebar toolbar.
+Filter by HTTP method or module with native multi-select pickers. Live search by path or description. Toggle between spec order and A→Z. All from the sidebar toolbar.
 
-![Filter by HTTP method picker showing GET, POST, PUT, PATCH, DELETE](images/filter-picker.jpg)
+![Filter by HTTP method picker showing GET, POST, PUT, PATCH, DELETE](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/filter-requests.jpg)
 
+![Filter by module picker](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/filter-module.jpg)
 ---
 
 ### Go to Source
@@ -51,14 +52,14 @@ Click any endpoint → jump directly to the route handler in your Python source.
 
 Works automatically with FastAPI — no configuration needed.
 
-![Source navigation jumping from /auth/login in the sidebar to the login function in router.py](images/source-nav.jpg)
+![Source navigation jumping from /auth/login in the sidebar to the login function in router.py](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/source-nav.jpg)
 
 ---
 
 ### Request history
 Every request you fire is saved to a per-project history with method, status code, elapsed time, and full request/response bodies. Click any history entry to reopen it with everything restored exactly as it was.
 
-![Request panel with history showing multiple POST and GET requests](images/history.jpg)
+![Request panel with history showing multiple POST and GET requests](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/history.jpg)
 
 ---
 
