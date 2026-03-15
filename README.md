@@ -14,6 +14,8 @@ API Explorer eliminates that entirely. If your server is running and exposes an 
 
 ## Features
 
+> **Preview release** — feedback welcome via [GitHub Issues](https://github.com/sahilr05/vscode-api-explorer/issues)
+
 ### Zero-config endpoint discovery
 Point it at your server once. API Explorer fetches `/openapi.json`, parses every route, and populates the sidebar. No collection files, no manual entry.
 
