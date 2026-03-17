@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.1] - 2026-03-18
+
+### Changed
+- Updated README with screenshots and config panel documentation
+
 ## [0.2.0] - 2026-03-18
 
 ### Added
