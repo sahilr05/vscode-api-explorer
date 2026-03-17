@@ -71,6 +71,16 @@ Every request you fire is saved to a per-project history with method, status cod
 
 ---
 
+### Project Configuration
+
+One place to configure everything for your workspace — base URL, authentication, and default headers. Click the ⚙ icon in the sidebar toolbar to open it.
+
+![Project configuration panel showing base URL, auth type selector, and default headers](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/project-config.jpg)
+
+Set a Bearer token once and it's automatically attached to every request as `Authorization: Bearer ...`. Supports Bearer Token, API Key, and Basic Auth out of the box.
+
+---
+
 ## Getting Started
 
 1. Install the extension
