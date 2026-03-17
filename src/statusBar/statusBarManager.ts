@@ -28,7 +28,7 @@ export class StatusBarManager {
         context.subscriptions.push(this._item)
 
         // Re-render whenever base URL changes
-        config.onDidChangeBaseUrl(() => this.setLoading())
+        config.onDidChange(() => this.setLoading())
     }
 
     // Call this while the spec is being fetched

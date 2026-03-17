@@ -22,11 +22,9 @@ export class RequestPanel {
     private static _panels = new Map<string, vscode.WebviewPanel>()
 
     // Single reusable preview panel
-    private static _previewPanel:      vscode.WebviewPanel  | undefined
-    private static _previewKey:        string               | undefined
-    // Track the active message listener so we can dispose it before re-attaching
-    // This is the root fix for duplicate requests on preview panel swap
-    private static _previewDisposable: vscode.Disposable    | undefined
+    private static _previewPanel:      vscode.WebviewPanel | undefined
+    private static _previewKey:        string              | undefined
+    private static _previewDisposable: vscode.Disposable   | undefined
 
     public static create(
         endpoint:  ApiEndpoint,
@@ -53,11 +51,8 @@ export class RequestPanel {
         const permanent = this._panels.get(key)
         if (permanent) { permanent.reveal(vscode.ViewColumn.One); return }
 
-        // Reuse preview panel — swap content and replace the message handler
+        // Reuse preview panel — dispose old handler before swapping
         if (this._previewPanel) {
-            // Dispose previous listener BEFORE attaching a new one
-            // Without this, every swap adds another listener and one click
-            // fires N requests (one per swap)
             this._previewDisposable?.dispose()
 
             this._previewKey                = key
@@ -71,7 +66,7 @@ export class RequestPanel {
         }
 
         // No preview panel yet — create one
-        const panel = this._newPanel(endpoint, context, config, history, restored)
+        const panel             = this._newPanel(endpoint, context, config, history, restored)
         this._previewPanel      = panel
         this._previewKey        = key
 
@@ -109,12 +104,8 @@ export class RequestPanel {
             `${endpoint.method}:${endpoint.path}`
         )
 
-        // Store disposable on the preview tracker when this becomes the preview
-        // (set after return in create()) — for permanent panels, push to subscriptions
-        panel.onDidDispose(() => disposable.dispose())
-
-        // Also track it as the preview disposable if this is the first preview panel
         this._previewDisposable = disposable
+        panel.onDidDispose(() => disposable.dispose())
 
         return panel
     }
@@ -127,8 +118,7 @@ export class RequestPanel {
         key:      string
     ): vscode.Disposable {
 
-        return attachRequestHandler(panel, endpoint, history, () => {
-            // Graduate preview → permanent on first edit
+        return attachRequestHandler(panel, endpoint, config, history, () => {
             if (this._previewPanel === panel) {
                 this._panels.set(key, panel)
                 this._previewDisposable = undefined

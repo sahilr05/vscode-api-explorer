@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.0] - 2026-03-18
+
+### Added
+- Project Configuration panel (⚙ gear icon in sidebar)
+- Auth support: Bearer Token, API Key, Basic Auth - set once, applied to all requests
+- Default headers manager - set headers once per project, merged into every request
+- Base URL now managed from the config panel (status bar still works too)
+- Update notification - existing users are informed when new features land
+
 ## [0.1.1] - 2026-03-15
 
 ### Fixed

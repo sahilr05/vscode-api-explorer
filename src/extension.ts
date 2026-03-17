@@ -4,6 +4,7 @@ import { OpenApiLoader }        from './openapi/openApiLoader'
 import { OpenApiParser }        from './openapi/openApiParser'
 import { RequestPanel }         from './request/requestPanel'
 import { ConfigManager }        from './config/configManager'
+import { ConfigPanel }          from './config/webview/configPanel'
 import { StatusBarManager }     from './statusBar/statusBarManager'
 import { HistoryManager }       from './history/historyManager'
 import { HistoryTreeProvider }  from './history/historyTreeProvider'
@@ -18,7 +19,26 @@ export function activate(context: vscode.ExtensionContext) {
     const history      = new HistoryManager(context)
     const treeProvider = new EndpointTreeProvider([])
     const histProvider = new HistoryTreeProvider(history)
-    const statusBar    = new StatusBarManager(config, context)
+    const statusBar = new StatusBarManager(config, context)
+
+    // ── Version update notification ───────────────────────────────────────────
+    const currentVersion = vscode.extensions.getExtension('sahilrajpal.api-explorer')?.packageJSON?.version
+    const lastVersion    = context.globalState.get<string>('apiExplorer.lastVersion')
+
+    if (currentVersion && lastVersion && currentVersion !== lastVersion) {
+        vscode.window.showInformationMessage(
+            `API Explorer updated to v${currentVersion} — Auth headers, default headers, and project config panel added. Click the ⚙ icon in the sidebar to set up.`,
+            'Open Config'
+        ).then(action => {
+            if (action === 'Open Config') {
+                vscode.commands.executeCommand('apiExplorer.openConfig')
+            }
+        })
+    }
+
+    if (currentVersion) {
+        context.globalState.update('apiExplorer.lastVersion', currentVersion)
+    }
 
     vscode.window.registerTreeDataProvider('apiExplorer.endpoints', treeProvider)
     vscode.window.registerTreeDataProvider('apiExplorer.history',   histProvider)
@@ -42,12 +62,20 @@ export function activate(context: vscode.ExtensionContext) {
 
     loadEndpoints()
 
+    // Re-load when base URL changes from config panel
+    config.onDidChange(() => loadEndpoints())
+
+    // ── Config panel ──────────────────────────────────────────────────────────
+    const openConfigCommand = vscode.commands.registerCommand(
+        'apiExplorer.openConfig',
+        () => ConfigPanel.open(context, config, loadEndpoints)
+    )
+
     // ── Search ────────────────────────────────────────────────────────────────
     let activeSearch: vscode.InputBox | undefined
 
     const searchCommand = vscode.commands.registerCommand('apiExplorer.search', () => {
         if (activeSearch) { activeSearch.show(); return }
-
         const box = vscode.window.createInputBox()
         box.placeholder = "Search endpoints by path or description…"
         box.onDidChangeValue(value => {
@@ -74,7 +102,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     const changeBaseUrlCommand = vscode.commands.registerCommand(
         'apiExplorer.changeBaseUrl',
-        async () => { const changed = await config.promptChange(); if (changed) loadEndpoints() }
+        async () => {
+            const changed = await config.promptChange()
+            if (changed) loadEndpoints()
+        }
     )
 
     const openRequestCommand = vscode.commands.registerCommand(
@@ -115,9 +146,6 @@ export function activate(context: vscode.ExtensionContext) {
     const goToSourceCommand = vscode.commands.registerCommand(
         'apiExplorer.goToSource',
         (item: any) => {
-            // When fired from inline tree button, VSCode passes the TreeItem
-            // which has an `endpoint` property. When fired from command palette
-            // or context menu it may already be a raw ApiEndpoint.
             const endpoint: ApiEndpoint = item?.endpoint ?? item
             goToSource(endpoint)
         }
@@ -167,22 +195,19 @@ export function activate(context: vscode.ExtensionContext) {
         async () => {
             const allModules = treeProvider.allModules
             if (allModules.length === 0) {
-                vscode.window.showInformationMessage('API Explorer: No modules detected yet — load a spec first.')
+                vscode.window.showInformationMessage('API Explorer: No modules detected yet.')
                 return
             }
-
             const current = treeProvider.moduleFilters
             const items   = allModules.map(m => ({
                 label:  m,
                 picked: current.size === 0 ? true : current.has(m),
             }))
-
             const picked = await vscode.window.showQuickPick(items, {
                 canPickMany: true,
                 title:       "Filter by Module",
                 placeHolder: "Select modules to show (all = no filter)",
             })
-
             if (!picked) return
             treeProvider.setModuleFilters(
                 picked.length === allModules.length || picked.length === 0
@@ -208,6 +233,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.executeCommand('setContext', 'apiExplorer.searchActive', false)
 
     context.subscriptions.push(
+        openConfigCommand,
         searchCommand, clearSearchCommand,
         refreshCommand, changeBaseUrlCommand,
         openRequestCommand, openFromHistoryCommand, clearHistoryCommand,

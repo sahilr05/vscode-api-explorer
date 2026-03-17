@@ -4,17 +4,18 @@
  * from the extension host, and saves results to history.
  *
  * Returns a Disposable so the caller can remove the listener
- * before attaching a new one — prevents duplicate requests
- * when the preview panel swaps to a different endpoint.
+ * before attaching a new one — prevents duplicate requests.
  */
 
 import * as vscode        from "vscode"
 import { ApiEndpoint }    from "../types/endpoint"
+import { ConfigManager }  from "../config/configManager"
 import { HistoryManager } from "../history/historyManager"
 
 export function attachRequestHandler(
     panel:           vscode.WebviewPanel,
     endpoint:        ApiEndpoint,
+    config:          ConfigManager,
     history:         HistoryManager,
     onMarkPermanent: () => void
 ): vscode.Disposable {
@@ -27,7 +28,13 @@ export function attachRequestHandler(
         }
 
         if (message.type === "sendRequest") {
-            const { url, method, headers, body } = message
+            const { url, method, body } = message
+
+            // Merge default headers + auth from project config
+            // Request-level Content-Type is passed as override
+            const headers = config.buildRequestHeaders(
+                body ? { 'Content-Type': 'application/json' } : {}
+            )
 
             try {
                 const startTime = Date.now()

@@ -2,7 +2,7 @@
   "name": "api-explorer",
   "displayName": "API Explorer",
   "description": "Zero-config API explorer for FastAPI and OpenAPI projects. Auto-discovers endpoints, fires requests, and navigates to source - without leaving VSCode.",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "private": false,
   "publisher": "sahilrajpal",
   "author": "Sahil Rajpal",
@@ -55,6 +55,11 @@
       }
     },
     "commands": [
+      {
+        "command": "apiExplorer.openConfig",
+        "title": "Project Configuration",
+        "icon": "$(gear)"
+      },
       {
         "command": "apiExplorer.filterByModule",
         "title": "Filter by Module",
@@ -191,6 +196,11 @@
           "command": "apiExplorer.clearHistory",
           "when": "view == apiExplorer.history",
           "group": "navigation@1"
+        },
+        {
+          "command": "apiExplorer.openConfig",
+          "when": "view == apiExplorer.endpoints",
+          "group": "navigation@8"
         }
       ]
     }
