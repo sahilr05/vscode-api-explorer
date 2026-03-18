@@ -32,6 +32,20 @@ export function attachRequestHandler(
             return
         }
 
+        if (message.type === "openInEditor") {
+            const { content, language } = message
+            // Open response in a new untitled editor tab with JSON highlighting
+            const doc = await vscode.workspace.openTextDocument({
+                content,
+                language: language ?? 'json',
+            })
+            vscode.window.showTextDocument(doc, {
+                viewColumn: vscode.ViewColumn.Beside,
+                preview:    false,
+            })
+            return
+        }
+
         if (message.type === "sendRequest") {
             const { url, method, body } = message
 

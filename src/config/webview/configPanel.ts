@@ -26,7 +26,7 @@ export class ConfigPanel {
         const panel = vscode.window.createWebviewPanel(
             'apiExplorerConfig',
             'API Explorer — Project Config',
-            vscode.ViewColumn.One,
+            vscode.ViewColumn.Active,
             { enableScripts: true, retainContextWhenHidden: true }
         )
 

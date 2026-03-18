@@ -81,8 +81,29 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
         <div class="response-meta">
           <span class="status-badge \${cls}">\${msg.status} \${msg.statusText}</span>
           <span class="elapsed">\${msg.elapsed}ms</span>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button onclick="copyResponse()" style="
+              background:transparent;border:1px solid rgba(255,255,255,.12);
+              color:rgba(204,204,204,.5);font-size:10px;font-family:inherit;
+              padding:2px 8px;cursor:pointer;transition:all .1s;
+            " onmouseover="this.style.color='#ccc';this.style.borderColor='rgba(255,255,255,.3)'"
+               onmouseout="this.style.color='rgba(204,204,204,.5)';this.style.borderColor='rgba(255,255,255,.12)'">
+              ⎘ Copy
+            </button>
+            <button onclick="openInEditor()" style="
+              background:transparent;border:1px solid rgba(255,255,255,.12);
+              color:rgba(204,204,204,.5);font-size:10px;font-family:inherit;
+              padding:2px 8px;cursor:pointer;transition:all .1s;
+            " onmouseover="this.style.color='#ccc';this.style.borderColor='rgba(255,255,255,.3)'"
+               onmouseout="this.style.color='rgba(204,204,204,.5)';this.style.borderColor='rgba(255,255,255,.12)'">
+              ↗ Open in Editor
+            </button>
+          </div>
         </div>
-        <div class="code-block response-pre">\${highlight(fmt)}</div>\`
+        <div class="code-block response-pre" id="currentResponse">\${highlight(fmt)}</div>\`
+
+      // Store raw response for copy/open actions
+      window._lastResponse = fmt
 
     } else if (msg.type === 'error') {
       area.innerHTML = \`
@@ -92,6 +113,27 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
         </div>\`
     }
   })
+
+  // ── Response actions ──────────────────────────────────────────────────────
+  function copyResponse() {
+    if (!window._lastResponse) return
+    navigator.clipboard.writeText(window._lastResponse)
+    // Brief visual feedback
+    const btns = document.querySelectorAll('.response-meta button')
+    btns.forEach(b => { if (b.textContent.includes('Copy')) b.textContent = '✓ Copied' })
+    setTimeout(() => {
+      btns.forEach(b => { if (b.textContent.includes('Copied')) b.textContent = '⎘ Copy' })
+    }, 1500)
+  }
+
+  function openInEditor() {
+    if (!window._lastResponse) return
+    vscode.postMessage({
+      type:     'openInEditor',
+      content:  window._lastResponse,
+      language: 'json',
+    })
+  }
 
   // ── Send request ──────────────────────────────────────────────────────────
   function sendRequest() {
