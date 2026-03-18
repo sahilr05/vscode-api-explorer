@@ -32,6 +32,11 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
     setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = iconCopy() }, 1500)
   }
 
+  // ── Open config panel ─────────────────────────────────────────────────────
+  function openConfig() {
+    vscode.postMessage({ type: 'openConfig' })
+  }
+
   function iconCopy() {
     return '<svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M4 4v-2a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2h-2v2a2 2 0 01-2 2H2a2 2 0 01-2-2V6a2 2 0 012-2h2zm2 0h4a2 2 0 012 2v6h2V2H6v2zM2 6v8h6V6H2z"/></svg>'
   }
@@ -40,11 +45,31 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
     return '<svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>'
   }
 
+  const AUTH_LABELS = {
+    bearer: { label: 'Bearer',     color: '#10b981' },
+    apikey: { label: 'API Key',    color: '#3b82f6' },
+    basic:  { label: 'Basic Auth', color: '#f59e0b' },
+    none:   { label: 'No Auth',    color: 'rgba(204,204,204,0.3)' },
+  }
+
   // ── Incoming messages from extension host ─────────────────────────────────
   window.addEventListener('message', (event) => {
     const msg  = event.data
     const area = document.getElementById('responseArea')
     const btn  = document.getElementById('sendBtn')
+
+    // Config changed — update auth badge without re-rendering the whole panel
+    if (msg.type === 'configUpdated') {
+      const auth    = msg.auth
+      const style   = AUTH_LABELS[auth?.type] ?? AUTH_LABELS.none
+      const badge   = document.getElementById('authBadge')
+      if (badge) {
+        badge.textContent        = style.label
+        badge.style.borderColor  = style.color
+        badge.style.color        = style.color
+      }
+      return
+    }
 
     btn.disabled = false
     btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l11 6-11 6V2z"/></svg> Send Request'

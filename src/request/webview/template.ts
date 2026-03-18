@@ -9,8 +9,9 @@ import {
     buildRequestBodyTemplate,
     buildResponseBodyTemplate,
 } from "../../openapi/schemaResolver"
-import { getStyles }      from "./styles"
+import { getStyles }       from "./styles"
 import { getClientScript } from "./clientScript"
+import { AuthConfig }      from "../../config/configManager"
 
 const METHOD_COLORS: Record<string, string> = {
     GET:    "#10b981",
@@ -18,6 +19,13 @@ const METHOD_COLORS: Record<string, string> = {
     PUT:    "#f59e0b",
     DELETE: "#f43f5e",
     PATCH:  "#a78bfa",
+}
+
+const AUTH_LABELS: Record<string, { label: string; color: string }> = {
+    bearer: { label: "Bearer",    color: "#10b981" },
+    apikey: { label: "API Key",   color: "#3b82f6" },
+    basic:  { label: "Basic Auth", color: "#f59e0b" },
+    none:   { label: "No Auth",   color: "rgba(204,204,204,0.3)" },
 }
 
 export interface RestoredState {
@@ -31,7 +39,8 @@ export interface RestoredState {
 export function renderPanel(
     endpoint: ApiEndpoint,
     baseUrl:  string,
-    restored?: RestoredState
+    restored?: RestoredState,
+    auth?: AuthConfig
 ): string {
     const color       = METHOD_COLORS[endpoint.method] ?? "#cccccc"
     const hasBody     = ["POST", "PUT", "PATCH"].includes(endpoint.method)
@@ -48,6 +57,19 @@ export function renderPanel(
         /\{([^}]+)\}/g,
         `<span style="color:rgba(204,204,204,0.35)">{$1}</span>`
     )
+
+    // ── Auth badge ───────────────────────────────────────────────────────────
+    const authType  = auth?.type ?? "none"
+    const authStyle = AUTH_LABELS[authType] ?? AUTH_LABELS.none
+    const authBadge = `
+        <span id="authBadge" style="
+            font-family:'JetBrains Mono','Fira Code',monospace;
+            font-size:9px;font-weight:700;text-transform:uppercase;
+            letter-spacing:.06em;padding:2px 6px;
+            border:1px solid ${authStyle.color};
+            color:${authStyle.color};
+            flex-shrink:0;
+        ">${authStyle.label}</span>`
 
     // ── Path params ──────────────────────────────────────────────────────────
     const pathParamsHtml = pathParams.length > 0 ? `
@@ -140,7 +162,15 @@ export function renderPanel(
         <div class="base-url-strip">
             <span class="base-url-tag">Base URL</span>
             <span class="base-url-value">${baseUrl}</span>
-            <span class="base-url-hint">click status bar to change</span>
+            ${authBadge}
+            <button onclick="openConfig()" style="
+                background:transparent;border:none;cursor:pointer;
+                color:rgba(204,204,204,.35);font-size:11px;font-family:inherit;
+                padding:0 4px;transition:color .1s;flex-shrink:0;white-space:nowrap;
+            " onmouseover="this.style.color='rgba(204,204,204,.7)'"
+               onmouseout="this.style.color='rgba(204,204,204,.35)'">
+                ⚙ Configure
+            </button>
         </div>
 
         ${pathParamsHtml}

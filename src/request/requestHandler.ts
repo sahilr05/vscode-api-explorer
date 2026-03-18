@@ -27,6 +27,11 @@ export function attachRequestHandler(
             return
         }
 
+        if (message.type === "openConfig") {
+            vscode.commands.executeCommand('apiExplorer.openConfig')
+            return
+        }
+
         if (message.type === "sendRequest") {
             const { url, method, body } = message
 

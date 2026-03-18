@@ -101,7 +101,11 @@ export function activate(context: vscode.ExtensionContext) {
     loadEndpoints()
 
     // Re-load when base URL changes from config panel
-    config.onDidChange(() => loadEndpoints())
+    // Also notify all open request panels to refresh their auth badge
+    config.onDidChange(() => {
+        loadEndpoints()
+        RequestPanel.notifyConfigChanged(config.auth)
+    })
 
     // ── Config panel ──────────────────────────────────────────────────────────
     const openConfigCommand = vscode.commands.registerCommand(

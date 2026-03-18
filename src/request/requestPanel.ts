@@ -26,6 +26,13 @@ export class RequestPanel {
     private static _previewKey:        string              | undefined
     private static _previewDisposable: vscode.Disposable   | undefined
 
+    // Call this when config changes — updates auth badge in all open panels
+    public static notifyConfigChanged(auth: import("../config/configManager").AuthConfig) {
+        const message = { type: 'configUpdated', auth }
+        this._panels.forEach(panel => panel.webview.postMessage(message))
+        if (this._previewPanel) this._previewPanel.webview.postMessage(message)
+    }
+
     public static create(
         endpoint:  ApiEndpoint,
         context:   vscode.ExtensionContext,
@@ -57,7 +64,7 @@ export class RequestPanel {
 
             this._previewKey                = key
             this._previewPanel.title        = `${endpoint.method} ${endpoint.path}`
-            this._previewPanel.webview.html = renderPanel(endpoint, config.baseUrl)
+            this._previewPanel.webview.html = renderPanel(endpoint, config.baseUrl, undefined, config.auth)
             this._previewDisposable         = this._attachHandler(
                 this._previewPanel, endpoint, config, history, key
             )
@@ -97,7 +104,7 @@ export class RequestPanel {
             { enableScripts: true, retainContextWhenHidden: true }
         )
 
-        panel.webview.html = renderPanel(endpoint, config.baseUrl, restored)
+        panel.webview.html = renderPanel(endpoint, config.baseUrl, restored, config.auth)
 
         const disposable = this._attachHandler(
             panel, endpoint, config, history,
