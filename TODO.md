@@ -2,19 +2,20 @@
 
 ## 🐛 Known Bugs
 
-- [x] **Duplicate API calls when multiple tabs open for same endpoint** — fixed by disposing previous `onDidReceiveMessage` listener before attaching a new one in `requestPanel.ts`
-
 - [ ] **Sort doesn't work within module groups** — `toggleSort` notification fires but tree children don't reorder visually. VSCode appears to cache expanded `ModuleGroupItem` children. Tried double-firing `onDidChangeTreeData` with a 50ms gap — no effect. Needs deeper investigation into VSCode TreeView cache invalidation for nested items.
+
+- [ ] **Source navigation fails for some endpoints** — `list_items_module_a__get` operationId not parsed correctly in `sourceMapper.ts` when path has underscores. `extractFunctionName` strips too aggressively and loses the actual function name.
 
 ---
 
-## 🚀 Differentiating Features (high priority)
+## 🚀 Differentiating Features
 
-- [ ] **Auth Flow Sequences** ⭐⭐
-    - Detect login/auth endpoints automatically (`/login`, `/auth/token`, `/auth/login` etc.)
-    - Let user define a simple auth sequence in `.api-explorer.json` in workspace root
-    - "Run Auth Flow" button that fires login → extracts token from response → stores in `SecretStorage`
-    - Auto-attaches `Authorization: Bearer {token}` to all subsequent requests
+- [ ] **Auth token auto-extract** ⭐
+    - Static token config is already done (Project Config panel)
+    - Remaining: detect login/auth endpoints automatically (`/login`, `/auth/token` etc.)
+    - Fire login endpoint once → auto-extract token from response (`access_token`, `token`, `data.token`)
+    - Store securely in VSCode `SecretStorage`
+    - Auto-attach as `Authorization: Bearer {token}` on all subsequent requests
     - Show token expiry if JWT, prompt to re-auth when expired
     - New files: `src/auth/authManager.ts`, `src/auth/tokenExtractor.ts`
 
@@ -22,15 +23,9 @@
 
 ## 🔧 Pending Features
 
-- [ ] **Spec changelog diff** — diff old spec vs new spec on every reload, show what changed (new endpoints, removed endpoints, changed schemas) in a notification or dedicated panel
+- [ ] **Environment switching** — read `.env` files from workspace, `{{variable}}` placeholders in URLs and request bodies, QuickPick env switcher (dev / staging / prod)
 
-- [ ] **Environment switching** — read `.env` files from workspace, `{{variable}}` placeholders in URLs and bodies, QuickPick env switcher (dev / staging / prod)
-
-- [ ] **Default headers manager** — per-project key-value headers stored in `workspaceState`, merged into every request automatically. Solves headers fatigue.
-
-- [ ] **Chained requests (basic)** — pin a field from a response as a workspace variable, reference as `{{response.id}}` in next request
-
-- [ ] **Export collection** — export all endpoints as Postman-compatible JSON and a plain Git-committable format
+- [ ] **Export Postman collection** — export all endpoints as Postman-compatible JSON. Infrastructure already written in `postmanExporter.ts`, needs command + toolbar button wired up.
 
 - [ ] **TypeScript interface generator** — convert `components/schemas` into TypeScript `interface` definitions, "Copy Type" or "Insert into Editor"
 
@@ -45,8 +40,16 @@
 - [x] `operationId` not passed to `goToSource` from inline tree button — unwrap `item.endpoint ?? item`
 - [x] `$ref` resolution root mismatch — direct regex match instead of path walking
 - [x] Published to VS Code Marketplace and Open VSX
-- [x] Add auth support
-= [x] Added Project Configuration Panel to configure auth, headers, base URL
+- [x] Project Configuration Panel — configure auth, headers, base URL in one place
+- [x] Auth support — Bearer Token, API Key, Basic Auth set once, applied to all requests
+- [x] Default headers manager — set once per project, merged into every request
+- [x] Auth badge on request panel with live updates when config changes
+- [x] Auto-reconnect polling — silently polls when server offline, auto-connects when server starts
+- [x] Friendly offline state in sidebar instead of error toast
+- [x] "↗ Open in Editor" button — opens response in real VSCode editor tab
+- [x] "⎘ Copy" button on response
+- [x] Config panel opens in correct pane
+- [x] Clicking same endpoint no longer opens duplicate tab
 
 ---
 
@@ -55,4 +58,6 @@
 - Keep files split per separation of concerns — one responsibility per file
 - All new features should be workspace-scoped (use `workspaceState` not `globalState`)
 - Webview HTML, styles, and client JS live in `src/request/webview/` — keep them separate
-- Source navigation currently FastAPI-only — framework detection lives in `sourceMapper.ts`
+- Source navigation is FastAPI-only — framework detection lives in `sourceMapper.ts`
+- Auth token auto-extract builds on top of existing `ConfigManager.saveProjectConfig()`
+- `postmanExporter.ts` is written but not yet wired to a command

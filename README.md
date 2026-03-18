@@ -1,6 +1,6 @@
 # API Explorer
 
-**Test your APIs without leaving VSCode.** API Explorer auto-discovers your FastAPI (and any OpenAPI-compliant) endpoints the moment your server starts — no collections to set up, no copy-pasting URLs, no switching to Postman.
+**Test your APIs without leaving VSCode.** API Explorer auto-discovers your FastAPI (and any OpenAPI-compliant) endpoints the moment your server starts - no collections to set up, no copy-pasting URLs, no switching to Postman.
 
 ---
 
@@ -8,18 +8,18 @@
 
 Every API testing tool makes you do the same thing: open the app, create a collection, manually add your routes, set up environments. It's friction you repeat on every project.
 
-API Explorer eliminates that entirely. If your server is running and exposes an OpenAPI spec (FastAPI does this by default at `/openapi.json`), the extension picks it up automatically — all your endpoints appear in the sidebar, pre-filled with sample request bodies inferred from your actual schemas, ready to fire.
+API Explorer eliminates that entirely. If your server is running and exposes an OpenAPI spec (FastAPI does this by default at `/openapi.json`), the extension picks it up automatically - all your endpoints appear in the sidebar, pre-filled with sample request bodies inferred from your actual schemas, ready to fire.
 
 ---
 
 ## Features
 
-> **Preview release** — feedback welcome via [GitHub Issues](https://github.com/sahilr05/vscode-api-explorer/issues)
+> **Preview release** - feedback welcome via [GitHub Issues](https://github.com/sahilr05/vscode-api-explorer/issues)
 
 ### Zero-config endpoint discovery
 Point it at your server once. API Explorer fetches `/openapi.json`, parses every route, and populates the sidebar. No collection files, no manual entry.
 
-The base URL is stored per-workspace — each project on your machine remembers its own server.
+The base URL is stored per-workspace - each project on your machine remembers its own server.
 
 ![Request panel showing POST /module-a/ with pre-filled request body and expected response schema](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/request-panel.jpg)
 
@@ -33,7 +33,7 @@ The expected response schema is shown as a read-only preview below the request b
 ---
 
 ### Group by module or method
-View your endpoints grouped by HTTP method, or switch to module view — which infers groupings from your URL structure automatically. `/auth/login`, `/auth/me` → `auth`. `/module-a/`, `/module-a/{item_id}` → `module-a`.
+View your endpoints grouped by HTTP method, or switch to module view - which infers groupings from your URL structure automatically. `/auth/login`, `/auth/me` → `auth`. `/module-a/`, `/module-a/{item_id}` → `module-a`.
 
 ![Sidebar showing endpoints grouped by module: auth, module-a, module-b](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/module-grouping.jpg)
 
@@ -64,10 +64,11 @@ Every request you fire is saved to a per-project history with method, status cod
 ---
 
 ### Native VSCode feel
-- Matches your theme automatically — dark, light, or custom
+- Each endpoint opens in its own tab - click the same endpoint again to return to it
+- Click "↗ Open in Editor" on any response to view it in a real VSCode editor tab - full search, folding, and formatting
+- Auto-connects when your server starts - no manual refresh needed
+- Requests fire from the extension host - no CORS issues ever
 - Status bar shows connection state and endpoint count
-- Preview tab behaviour — browsing endpoints reuses one tab until you edit
-- Requests fire from the extension host, not the webview — no CORS issues ever
 
 ---
 
@@ -90,7 +91,7 @@ Set a Bearer token once and it's automatically attached to every request as `Aut
 
 **Default:** connects to `http://localhost:8000/openapi.json`
 
-To change the URL: click the status bar item at the bottom of VSCode (`localhost:8000 · N endpoints`) and enter your server's base URL. This is saved per-workspace.
+To change the URL, auth, or default headers: click the ⚙ icon in the sidebar toolbar to open the Project Configuration panel. Settings are saved per-workspace.
 
 ---
 
@@ -102,17 +103,11 @@ To change the URL: click the status bar item at the bottom of VSCode (`localhost
 
 ---
 
-## Works with any OpenAPI server
+## Built for FastAPI
 
-Built and optimized for FastAPI, but works with any server that exposes an OpenAPI 3.x spec:
+API Explorer is built and optimized for FastAPI. Everything works out of the box — zero config, full `$ref` schema resolution, and source navigation direct to your route handler.
 
-- **FastAPI** — full support including source navigation
-- **Django Ninja** — full support
-- **Flask** (with flask-smorest or flasgger) — full support
-- **NestJS, Express** (with swagger-jsdoc) — full support
-- **Spring Boot** (with springdoc) — full support
-
-Source navigation currently works with FastAPI only. Support for other frameworks is planned.
+Support for other OpenAPI-compatible frameworks is planned for a future release.
 
 ---
 
