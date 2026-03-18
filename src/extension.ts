@@ -19,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
     const history      = new HistoryManager(context)
     const treeProvider = new EndpointTreeProvider([])
     const histProvider = new HistoryTreeProvider(history)
-    const statusBar = new StatusBarManager(config, context)
+    const statusBar    = new StatusBarManager(config, context)
 
     // ── Version update notification ───────────────────────────────────────────
     const currentVersion = vscode.extensions.getExtension('sahilrajpal.api-explorer')?.packageJSON?.version
@@ -43,20 +43,58 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerTreeDataProvider('apiExplorer.endpoints', treeProvider)
     vscode.window.registerTreeDataProvider('apiExplorer.history',   histProvider)
 
+    // ── Auto-reconnect polling ────────────────────────────────────────────────
+    // Only polls when server is unreachable — stops as soon as connected
+    // Interval: 3s. Devs just start their server and the tree populates automatically.
+    let _pollTimer:    NodeJS.Timeout | undefined
+    let _isConnected = false
+
+    const startPolling = () => {
+        if (_pollTimer) return // already polling
+        _pollTimer = setInterval(async () => {
+            try {
+                const spec      = await OpenApiLoader.fetchSpec(config.openApiUrl)
+                const endpoints = OpenApiParser.parse(spec)
+                treeProvider.setEndpoints(endpoints)
+                statusBar.setConnected(endpoints.length)
+                _isConnected = true
+                stopPolling()
+                vscode.window.setStatusBarMessage(
+                    `API Explorer: Connected — ${endpoints.length} endpoints loaded`, 3000
+                )
+            } catch {
+                // still offline — keep polling silently
+            }
+        }, 3000)
+    }
+
+    const stopPolling = () => {
+        if (_pollTimer) {
+            clearInterval(_pollTimer)
+            _pollTimer = undefined
+        }
+    }
+
+    // Clean up on deactivate
+    context.subscriptions.push({ dispose: stopPolling })
+
     // ── Load endpoints ────────────────────────────────────────────────────────
     const loadEndpoints = async () => {
         statusBar.setLoading()
+        stopPolling() // stop any existing poll before trying fresh
         try {
             const spec      = await OpenApiLoader.fetchSpec(config.openApiUrl)
             const endpoints = OpenApiParser.parse(spec)
             treeProvider.setEndpoints(endpoints)
             statusBar.setConnected(endpoints.length)
+            _isConnected = true
         } catch (err: any) {
-            treeProvider.setEndpoints([])
+            // Show friendly empty state in tree instead of a toast
+            treeProvider.setOffline(config.openApiUrl)
             statusBar.setError()
-            vscode.window.showErrorMessage(
-                `API Explorer: Could not reach ${config.openApiUrl}. Is your server running?`
-            )
+            _isConnected = false
+            // Start quietly polling in the background
+            startPolling()
         }
     }
 

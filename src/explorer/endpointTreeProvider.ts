@@ -29,7 +29,8 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
     private _groupMode:     GroupMode     = "module"
     private _sortMode:      SortMode      = "default"
     private _methodFilters: Set<string>   = new Set()
-    private _moduleFilters: Set<string>   = new Set() // empty = show all modules
+    private _moduleFilters: Set<string>   = new Set()
+    private _offlineUrl:    string | undefined  // set when server is unreachable
 
     private _onDidChangeTreeData = new vscode.EventEmitter<void>()
     readonly onDidChangeTreeData: vscode.Event<void> = this._onDidChangeTreeData.event
@@ -39,7 +40,15 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
     }
 
     setEndpoints(endpoints: ApiEndpoint[]) {
-        this._endpoints = endpoints
+        this._endpoints  = endpoints
+        this._offlineUrl = undefined
+        this._onDidChangeTreeData.fire()
+    }
+
+    // Called when server is unreachable — shows friendly offline state in tree
+    setOffline(url: string) {
+        this._endpoints  = []
+        this._offlineUrl = url
         this._onDidChangeTreeData.fire()
     }
 
@@ -87,6 +96,14 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
     getTreeItem(element: vscode.TreeItem): vscode.TreeItem { return element }
 
     getChildren(element?: vscode.TreeItem): vscode.ProviderResult<vscode.TreeItem[]> {
+
+        if (!element && this._offlineUrl) {
+            return [
+                new InfoItem(`Server offline — waiting for ${this._offlineUrl}`, "loading~spin"),
+                new InfoItem("Start your server to auto-connect", "info"),
+                new InfoItem("Wrong URL? Click ⚙ to change", "gear"),
+            ]
+        }
 
         if (!element && this._endpoints.length === 0) {
             return [new InfoItem("No endpoints loaded", "loading~spin")]
