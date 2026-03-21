@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 8">
+  <rect x="0.5" y="0.5" width="29" height="7" rx="1.5" fill="#a78bfa" fill-opacity="0.18"/>
+  <rect x="0.5" y="0.5" width="29" height="7" rx="1.5" fill="none" stroke="#a78bfa" stroke-width="0.8" stroke-opacity="0.9"/>
+  <text x="15.0" y="6.5" font-family="monospace" font-size="6" font-weight="900" fill="#a78bfa" text-anchor="middle">PATCH</text>
+</svg>

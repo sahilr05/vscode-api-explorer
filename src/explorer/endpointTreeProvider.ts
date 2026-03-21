@@ -9,12 +9,14 @@ const METHOD_COLORS: Record<string, string> = {
     PATCH:  "charts.purple",
 }
 
-const METHOD_ICONS: Record<string, string> = {
-    GET:    "arrow-down",
-    POST:   "add",
-    PUT:    "edit",
-    DELETE: "trash",
-    PATCH:  "tools",
+// SVG badge icons — generated per method, stored in resources/icons/
+// Resolved at runtime relative to extension root via context.extensionUri
+const METHOD_SVG: Record<string, string> = {
+    GET:    "method-get.svg",
+    POST:   "method-post.svg",
+    PUT:    "method-put.svg",
+    PATCH:  "method-patch.svg",
+    DELETE: "method-delete.svg",
 }
 
 const SKIP_SEGMENTS = new Set(["api", "v1", "v2", "v3", "v4", "rest", "graphql"])
@@ -30,12 +32,16 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
     private _sortMode:      SortMode      = "default"
     private _methodFilters: Set<string>   = new Set()
     private _moduleFilters: Set<string>   = new Set()
-    private _offlineUrl:    string | undefined  // set when server is unreachable
+    private _offlineUrl:    string | undefined
+    private _errorMap:      Map<string, number> = new Map()
 
     private _onDidChangeTreeData = new vscode.EventEmitter<void>()
     readonly onDidChangeTreeData: vscode.Event<void> = this._onDidChangeTreeData.event
 
-    constructor(initialEndpoints: ApiEndpoint[]) {
+    constructor(
+        initialEndpoints: ApiEndpoint[],
+        private readonly _extensionUri: vscode.Uri
+    ) {
         this._endpoints = initialEndpoints
     }
 
@@ -78,6 +84,20 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
     setModuleFilters(modules: Set<string>) {
         this._moduleFilters = modules
         this._onDidChangeTreeData.fire()
+    }
+
+    // Called from requestHandler after a 5xx response
+    setEndpointError(key: string, status: number) {
+        this._errorMap.set(key, status)
+        this._onDidChangeTreeData.fire()
+    }
+
+    // Called from requestHandler after a successful response
+    clearEndpointError(key: string) {
+        if (this._errorMap.has(key)) {
+            this._errorMap.delete(key)
+            this._onDidChangeTreeData.fire()
+        }
     }
 
     get groupMode():     GroupMode   { return this._groupMode }
@@ -128,17 +148,25 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
         if (element instanceof MethodGroupItem) {
             return this._visibleEndpoints()
                 .filter(e => e.method === element.method)
-                .map(e => new EndpointItem(e))
+                .map(e => new EndpointItem(
+                    e,
+                    this._extensionUri,
+                    this._errorMap.get(`${e.method}:${e.path}`)
+                ))
         }
 
         if (element instanceof ModuleGroupItem) {
             const children = this._visibleEndpoints()
                 .filter(e => inferModule(e.path) === element.moduleName)
-            // Explicit sort here in case _visibleEndpoints cache is stale
             if (this._sortMode === "alpha") {
                 children.sort((a, b) => a.path.localeCompare(b.path))
             }
-            return children.map(e => new EndpointItem(e))
+            return children.map(e => new EndpointItem(
+                e,
+                this._extensionUri,
+                this._errorMap.get(`${e.method}:${e.path}`),
+                element.moduleName   // pass module so we can strip prefix
+            ))
         }
 
         return []
@@ -206,7 +234,7 @@ class MethodGroupItem extends vscode.TreeItem {
         this.description  = `${count}`
         this.tooltip      = `${method} — ${count} endpoint${count !== 1 ? "s" : ""}`
         this.iconPath     = new vscode.ThemeIcon(
-            METHOD_ICONS[method] ?? "symbol-method",
+            "symbol-method",
             new vscode.ThemeColor(METHOD_COLORS[method] ?? "foreground")
         )
         this.contextValue = "methodGroup"
@@ -224,25 +252,59 @@ class ModuleGroupItem extends vscode.TreeItem {
 }
 
 class EndpointItem extends vscode.TreeItem {
-    constructor(public readonly endpoint: ApiEndpoint) {
-        super(endpoint.path, vscode.TreeItemCollapsibleState.None)
-        this.description = endpoint.summary || endpoint.method
-        this.tooltip     = new vscode.MarkdownString(
+    constructor(
+        public readonly endpoint:  ApiEndpoint,
+        extensionUri:              vscode.Uri,
+        errorStatus?:              number,
+        moduleContext?:            string     // if set, strip this module prefix from path
+    ) {
+        // Strip module prefix in module-group view to reduce noise
+        // e.g. in "module-a" group: /module-a/create → /create, /module-a/ → /
+        let displayPath = endpoint.path
+        if (moduleContext) {
+            const prefix = `/${moduleContext}`
+            if (displayPath.startsWith(prefix)) {
+                displayPath = displayPath.slice(prefix.length) || "/"
+            }
+        }
+
+        super(displayPath, vscode.TreeItemCollapsibleState.None)
+
+        this.description = endpoint.summary || ""
+
+        if (errorStatus) {
+            this.description = `${endpoint.summary || ""}  · ${errorStatus}`.trim()
+            this.iconPath    = new vscode.ThemeIcon(
+                "error",
+                new vscode.ThemeColor("list.errorForeground")
+            )
+        } else {
+            const svgFile = METHOD_SVG[endpoint.method]
+            if (svgFile) {
+                this.iconPath = {
+                    light: vscode.Uri.joinPath(extensionUri, "resources", "icons", svgFile),
+                    dark:  vscode.Uri.joinPath(extensionUri, "resources", "icons", svgFile),
+                }
+            } else {
+                this.iconPath = new vscode.ThemeIcon(
+                    "circle-small-filled",
+                    new vscode.ThemeColor(METHOD_COLORS[endpoint.method] ?? "foreground")
+                )
+            }
+        }
+
+        this.tooltip = new vscode.MarkdownString(
             `**${endpoint.method}** \`${endpoint.path}\`` +
-            (endpoint.summary     ? `\n\n${endpoint.summary}` : "") +
+            (endpoint.summary  ? `\n\n${endpoint.summary}` : "") +
+            (errorStatus       ? `\n\n⚠ Last request failed with **${errorStatus}**` : "") +
             (endpoint.operationId ? `\n\n*operationId: \`${endpoint.operationId}\`*` : "")
         )
-        this.iconPath = new vscode.ThemeIcon(
-            "circle-small-filled",
-            new vscode.ThemeColor(METHOD_COLORS[endpoint.method] ?? "foreground")
-        )
+
         this.command = {
             command:   "apiExplorer.openRequest",
             title:     "Open Request",
             arguments: [endpoint],
         }
-        // "endpoint" context shows the Go to Source item in the right-click menu
-        // "endpointWithSource" shows it AND the inline icon
         this.contextValue = endpoint.operationId ? "endpointWithSource" : "endpoint"
     }
 }

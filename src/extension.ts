@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     const config       = new ConfigManager(context)
     const history      = new HistoryManager(context)
-    const treeProvider = new EndpointTreeProvider([])
+    const treeProvider = new EndpointTreeProvider([], context.extensionUri)
     const histProvider = new HistoryTreeProvider(history)
     const statusBar    = new StatusBarManager(config, context)
 
@@ -152,7 +152,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     const openRequestCommand = vscode.commands.registerCommand(
         'apiExplorer.openRequest',
-        (endpoint: ApiEndpoint) => RequestPanel.create(endpoint, context, config, history)
+        (endpoint: ApiEndpoint) => RequestPanel.create(endpoint, context, config, history, treeProvider)
     )
 
     const openFromHistoryCommand = vscode.commands.registerCommand(
@@ -163,7 +163,7 @@ export function activate(context: vscode.ExtensionContext) {
                 path:    entry.path,
                 summary: `From history — ${entry.status} ${entry.statusText}`,
             }
-            RequestPanel.create(endpoint, context, config, history, {
+            RequestPanel.create(endpoint, context, config, history, treeProvider, {
                 requestBody:  entry.body,
                 responseBody: entry.responseBody,
                 status:       entry.status,

@@ -19,15 +19,30 @@
     - Show token expiry if JWT, prompt to re-auth when expired
     - New files: `src/auth/authManager.ts`, `src/auth/tokenExtractor.ts`
 
+- [ ] **Named test cases per endpoint** ⭐
+    - Save named input sets per endpoint (e.g. "valid data", "missing field", "admin token")
+    - Stored in `workspaceState` — per project, persists across reloads
+    - Shown as a dropdown in the request panel to quickly switch between saved inputs
+    - Feeds directly into pytest export
+
+- [ ] **Export session to pytest** ⭐⭐
+    - One click turns real API usage (from history or named test cases) into a runnable pytest file
+    - Generated file uses `httpx` and `pytest`, ready to drop into the project and run in CI
+    - Assertions generated from actual responses — status code, key field presence, values
+    - Does NOT blindly run all endpoints — only exports what the dev has explicitly tested
+    - DELETE/destructive endpoints require explicit opt-in
+    - Positions the extension as a development accelerator, not just an HTTP client
+    - New file: `src/export/pytestExporter.ts`
+
 ---
 
 ## 🔧 Pending Features
 
-- [ ] **Environment switching** — read `.env` files from workspace, `{{variable}}` placeholders in URLs and request bodies, QuickPick env switcher (dev / staging / prod)
+- [ ] **Method badge in sidebar tree** — replace colored dot with a `[GET]` / `[POST]` / `[PUT]` etc. badge before the path, colored by method. Industry standard (Postman, Insomnia, Thunder Client all do this). Summary stays as description on the right. Needs update in `EndpointItem` constructor in `endpointTreeProvider.ts` — VSCode `TreeItem` doesn't support inline HTML so badge needs to be part of the label string or use a custom `TreeItemLabel` with highlights.
 
 - [ ] **Export Postman collection** — export all endpoints as Postman-compatible JSON. Infrastructure already written in `postmanExporter.ts`, needs command + toolbar button wired up.
 
-- [ ] **TypeScript interface generator** — convert `components/schemas` into TypeScript `interface` definitions, "Copy Type" or "Insert into Editor"
+- [ ] **5xx error highlight in sidebar** — when a request to an endpoint returns 5xx, mark it in the tree with a red `$(error)` icon + status in description (e.g. `Create · 500`). Clears automatically when a successful request is made to the same endpoint. In-memory only — `Map<string, number>` keyed by `METHOD:path`, no persistence needed. Only 5xx, not 4xx (4xx is usually intentional during testing). Needs coordination between `requestHandler.ts` (fires the event) and `endpointTreeProvider.ts` (updates the tree item).
 
 ---
 

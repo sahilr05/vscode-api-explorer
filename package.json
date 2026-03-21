@@ -15,7 +15,7 @@
   "bugs": {
     "url": "https://github.com/sahilr05/vscode-api-explorer/issues"
   },
-  "icon": "resources/icon.png",
+  "icon": "resources/icons/icon.png",
   "galleryBanner": {
     "color": "#1e1e1e",
     "theme": "dark"
@@ -120,7 +120,7 @@
         {
           "id": "api-explorer",
           "title": "API Explorer",
-          "icon": "resources/icon.svg"
+          "icon": "resources/icons/icon.svg"
         }
       ]
     },

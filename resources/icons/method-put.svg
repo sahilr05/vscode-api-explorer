@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 8">
+  <rect x="0.5" y="0.5" width="19" height="7" rx="1.5" fill="#f59e0b" fill-opacity="0.18"/>
+  <rect x="0.5" y="0.5" width="19" height="7" rx="1.5" fill="none" stroke="#f59e0b" stroke-width="0.8" stroke-opacity="0.9"/>
+  <text x="10.0" y="6.5" font-family="monospace" font-size="6" font-weight="900" fill="#f59e0b" text-anchor="middle">PUT</text>
+</svg>

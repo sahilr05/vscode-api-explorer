@@ -11,14 +11,18 @@ import * as vscode        from "vscode"
 import { ApiEndpoint }    from "../types/endpoint"
 import { ConfigManager }  from "../config/configManager"
 import { HistoryManager } from "../history/historyManager"
+import { EndpointTreeProvider } from "../explorer/endpointTreeProvider"
 
 export function attachRequestHandler(
     panel:           vscode.WebviewPanel,
     endpoint:        ApiEndpoint,
     config:          ConfigManager,
     history:         HistoryManager,
+    treeProvider:    EndpointTreeProvider,
     onMarkPermanent: () => void
 ): vscode.Disposable {
+
+    const endpointKey = `${endpoint.method}:${endpoint.path}`
 
     return panel.webview.onDidReceiveMessage(async (message) => {
 
@@ -33,13 +37,12 @@ export function attachRequestHandler(
         }
 
         if (message.type === "openInEditor") {
-            const { content, language } = message
-            // Open response in a new untitled editor tab with JSON highlighting
+            const { content } = message
             const doc = await vscode.workspace.openTextDocument({
                 content,
-                language: language ?? 'json',
+                language: 'json',
             })
-            vscode.window.showTextDocument(doc, {
+            await vscode.window.showTextDocument(doc, {
                 viewColumn: vscode.ViewColumn.Beside,
                 preview:    false,
             })
@@ -76,6 +79,13 @@ export function attachRequestHandler(
                     elapsed,
                     data:       responseData,
                 })
+
+                // Update sidebar error state
+                if (response.status >= 500) {
+                    treeProvider.setEndpointError(endpointKey, response.status)
+                } else {
+                    treeProvider.clearEndpointError(endpointKey)
+                }
 
                 history.add({
                     method,
