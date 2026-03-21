@@ -1,6 +1,6 @@
 # API Explorer
 
-**Test your APIs without leaving VSCode.** API Explorer auto-discovers your FastAPI (and any OpenAPI-compliant) endpoints the moment your server starts - no collections to set up, no copy-pasting URLs, no switching to Postman.
+**Test your APIs without leaving VSCode.** API Explorer auto-discovers your FastAPI (and any OpenAPI-compliant) endpoints the moment your server starts - no collections to set up, no copy-pasting URLs, no switching to different app solely for API testing.
 
 ---
 
@@ -17,15 +17,17 @@ API Explorer eliminates that entirely. If your server is running and exposes an 
 > **Preview release** - feedback welcome via [GitHub Issues](https://github.com/sahilr05/vscode-api-explorer/issues)
 
 ### Zero-config endpoint discovery
+
 Point it at your server once. API Explorer fetches `/openapi.json`, parses every route, and populates the sidebar. No collection files, no manual entry.
 
 The base URL is stored per-workspace - each project on your machine remembers its own server.
 
-![Request panel showing POST /module-a/ with pre-filled request body and expected response schema](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/request-panel.jpg)
+![Request panel showing POST /module-a/ with pre-filled request body and expected response schema](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/request-panel.png)
 
 ---
 
 ### Request bodies pre-filled from your schemas
+
 API Explorer resolves `$ref` pointers in your OpenAPI spec and builds a sample body from your actual Pydantic models. Open a `POST` endpoint and the body is already there — correct field names, correct types.
 
 The expected response schema is shown as a read-only preview below the request body, so you know what to expect before you even hit Send.
@@ -33,37 +35,40 @@ The expected response schema is shown as a read-only preview below the request b
 ---
 
 ### Group by module or method
+
 View your endpoints grouped by HTTP method, or switch to module view - which infers groupings from your URL structure automatically. `/auth/login`, `/auth/me` → `auth`. `/module-a/`, `/module-a/{item_id}` → `module-a`.
 
-![Sidebar showing endpoints grouped by module: auth, module-a, module-b](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/module-grouping.jpg)
+![Sidebar showing endpoints grouped by module: auth, module-a, module-b](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/module-grouping.png)
 
 ---
 
 ### Filter, search, sort
-Filter by HTTP method or module with native multi-select pickers. Live search by path or description. Toggle between spec order and A→Z. All from the sidebar toolbar.
 
-![Filter by HTTP method picker showing GET, POST, PUT, PATCH, DELETE](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/filter-requests.jpg)
+Filter by HTTP method or module using a single combined picker — uncheck to hide, check to show, apply everything at once. Live search by path or description. All from the sidebar toolbar.
 
-![Filter by module picker](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/filter-module.jpg)
----
+![Filter & Sort picker showing method and module options](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/filter.png)
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ### Go to Source
+
 Click any endpoint → jump directly to the route handler in your Python source. API Explorer reads the `operationId` from your spec, extracts the function name, and opens the exact file and line. No searching required.
 
 Works automatically with FastAPI — no configuration needed.
 
-![Source navigation jumping from /auth/login in the sidebar to the login function in router.py](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/source-nav.jpg)
+![Source navigation jumping from /auth/login in the sidebar to the login function in router.py](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/source-nav.png)
 
 ---
 
 ### Request history
+
 Every request you fire is saved to a per-project history with method, status code, elapsed time, and full request/response bodies. Click any history entry to reopen it with everything restored exactly as it was.
 
-![Request panel with history showing multiple POST and GET requests](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/history.jpg)
+![Request panel with history showing multiple POST and GET requests](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/history.png)
 
 ---
 
 ### Native VSCode feel
+
 - Each endpoint opens in its own tab - click the same endpoint again to return to it
 - Click "↗ Open in Editor" on any response to view it in a real VSCode editor tab - full search, folding, and formatting
 - Auto-connects when your server starts - no manual refresh needed
@@ -76,9 +81,17 @@ Every request you fire is saved to a per-project history with method, status cod
 
 One place to configure everything for your workspace — base URL, authentication, and default headers. Click the ⚙ icon in the sidebar toolbar to open it.
 
-![Project configuration panel showing base URL, auth type selector, and default headers](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/project-config.jpg)
+![Project configuration panel showing base URL, auth type selector, and default headers](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/project-config.png)
 
 Set a Bearer token once and it's automatically attached to every request as `Authorization: Bearer ...`. Supports Bearer Token, API Key, and Basic Auth out of the box.
+
+---
+
+### Auth token auto-extract
+
+Fire your login endpoint once — API Explorer detects the token in the response and asks if you want to use it. Click **Use as Auth** and it's stored securely and attached to every subsequent request automatically.
+
+Works with any response containing `access_token`, `token`, or `jwt` fields. Supports JWT expiry detection — you'll get a warning notification when your token expires with a one-click shortcut back to your login endpoint.
 
 ---
 
@@ -97,8 +110,9 @@ To change the URL, auth, or default headers: click the ⚙ icon in the sidebar t
 
 ## Configuration
 
-| Setting | Default | Description |
-|---------|---------|-------------|
+
+| Setting                  | Default                              | Description                                |
+| -------------------------- | -------------------------------------- | -------------------------------------------- |
 | `apiExplorer.openapiUrl` | `http://localhost:8000/openapi.json` | URL of the OpenAPI spec to load on startup |
 
 ---
