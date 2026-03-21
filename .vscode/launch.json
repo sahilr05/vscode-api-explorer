@@ -8,7 +8,7 @@
       "runtimeExecutable": "${execPath}",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
-        "--folder-uri=file:///Users/sahilrajpal/Documents/dev/fastapi_modular_app/app"
+        "--folder-uri=file:///Users/sahilrajpal/Documents/dev/fastapi-rfx/"
       ],
       "outFiles": [
         "${workspaceFolder}/out/**/*.js"

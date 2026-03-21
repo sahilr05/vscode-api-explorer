@@ -1,25 +1,17 @@
-import * as vscode from 'vscode'
-import { ApiEndpoint } from '../types/endpoint'
+/**
+ * endpointTreeProvider.ts
+ * VSCode TreeDataProvider for the Endpoints sidebar.
+ * Delegates rendering to treeItems.ts and grouping to moduleTree.ts.
+ */
 
-const METHOD_COLORS: Record<string, string> = {
-    GET:    "charts.green",
-    POST:   "charts.blue",
-    PUT:    "charts.yellow",
-    DELETE: "charts.red",
-    PATCH:  "charts.purple",
-}
-
-// SVG badge icons — generated per method, stored in resources/icons/
-// Resolved at runtime relative to extension root via context.extensionUri
-const METHOD_SVG: Record<string, string> = {
-    GET:    "method-get.svg",
-    POST:   "method-post.svg",
-    PUT:    "method-put.svg",
-    PATCH:  "method-patch.svg",
-    DELETE: "method-delete.svg",
-}
-
-const SKIP_SEGMENTS = new Set(["api", "v1", "v2", "v3", "v4", "rest", "graphql"])
+import * as vscode      from 'vscode'
+import { ApiEndpoint }  from '../types/endpoint'
+import { inferModule, inferModulePath, endpointBelongsTo } from './inferModule'
+import { buildTopLevelModuleTree, buildModuleTree, ModuleTreeContext } from './moduleTree'
+import {
+    MethodGroupItem, ModuleGroupItem,
+    EndpointItem, InfoItem
+} from './treeItems'
 
 export type GroupMode = "method" | "module"
 export type SortMode  = "default" | "alpha"
@@ -34,7 +26,7 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
     private _moduleFilters: Set<string>   = new Set()
     private _offlineUrl:    string | undefined
     private _errorMap:      Map<string, number> = new Map()
-    private _authEndpoints: Set<string>   = new Set() // endpoints with stored tokens
+    private _authEndpoints: Set<string>   = new Set()
 
     private _onDidChangeTreeData = new vscode.EventEmitter<void>()
     readonly onDidChangeTreeData: vscode.Event<void> = this._onDidChangeTreeData.event
@@ -46,13 +38,14 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
         this._endpoints = initialEndpoints
     }
 
+    // ── State setters ─────────────────────────────────────────────────────────
+
     setEndpoints(endpoints: ApiEndpoint[]) {
         this._endpoints  = endpoints
         this._offlineUrl = undefined
         this._onDidChangeTreeData.fire()
     }
 
-    // Called when server is unreachable — shows friendly offline state in tree
     setOffline(url: string) {
         this._endpoints  = []
         this._offlineUrl = url
@@ -71,8 +64,6 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
 
     setSortMode(mode: SortMode) {
         this._sortMode = mode
-        // Fire twice — first clears the cached tree, second rebuilds it
-        // This forces VSCode to re-request children for all expanded nodes
         this._onDidChangeTreeData.fire()
         setTimeout(() => this._onDidChangeTreeData.fire(), 50)
     }
@@ -87,7 +78,6 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
         this._onDidChangeTreeData.fire()
     }
 
-    // Called from requestHandler after token stored
     setAuthEndpoint(key: string) {
         this._authEndpoints.add(key)
         this._onDidChangeTreeData.fire()
@@ -98,19 +88,16 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
         this._onDidChangeTreeData.fire()
     }
 
-    // Called on startup to restore auth endpoints from store
     setAuthEndpoints(keys: string[]) {
         this._authEndpoints = new Set(keys)
         this._onDidChangeTreeData.fire()
     }
 
-    // Called from requestHandler after a 5xx response
     setEndpointError(key: string, status: number) {
         this._errorMap.set(key, status)
         this._onDidChangeTreeData.fire()
     }
 
-    // Called from requestHandler after a successful response
     clearEndpointError(key: string) {
         if (this._errorMap.has(key)) {
             this._errorMap.delete(key)
@@ -118,23 +105,26 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
         }
     }
 
+    refresh(): void { this._onDidChangeTreeData.fire() }
+
+    // ── Getters ───────────────────────────────────────────────────────────────
+
     get groupMode():     GroupMode   { return this._groupMode }
     get sortMode():      SortMode    { return this._sortMode }
     get methodFilters(): Set<string> { return this._methodFilters }
     get moduleFilters(): Set<string> { return this._moduleFilters }
 
-    // Returns all unique module names from the loaded endpoints
-    // Used by the filter command to populate the QuickPick
     get allModules(): string[] {
         return [...new Set(this._endpoints.map(e => inferModule(e.path)))].sort()
     }
 
-    refresh(): void { this._onDidChangeTreeData.fire() }
+    // ── TreeDataProvider ──────────────────────────────────────────────────────
 
     getTreeItem(element: vscode.TreeItem): vscode.TreeItem { return element }
 
     getChildren(element?: vscode.TreeItem): vscode.ProviderResult<vscode.TreeItem[]> {
 
+        // Offline state
         if (!element && this._offlineUrl) {
             return [
                 new InfoItem(`Server offline — waiting for ${this._offlineUrl}`, "loading~spin"),
@@ -147,6 +137,13 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
             return [new InfoItem("No endpoints loaded", "loading~spin")]
         }
 
+        const ctx: ModuleTreeContext = {
+            extensionUri:  this._extensionUri,
+            errorMap:      this._errorMap,
+            authEndpoints: this._authEndpoints,
+        }
+
+        // Root level
         if (!element) {
             const visible = this._visibleEndpoints()
             if (visible.length === 0 && this._searchQuery) {
@@ -158,40 +155,38 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
             if (visible.length === 0 && this._moduleFilters.size > 0) {
                 return [new InfoItem("No endpoints match the active module filter", "folder")]
             }
-            return this._groupMode === "method"
-                ? this._groupByMethod(visible)
-                : this._groupByModule(visible)
+
+            if (this._groupMode === "method") {
+                return this._groupByMethod(visible)
+            }
+
+            return buildTopLevelModuleTree(visible, ctx, () => this._groupByMethod(visible))
         }
 
+        // Method group children — flat list
         if (element instanceof MethodGroupItem) {
             return this._visibleEndpoints()
                 .filter(e => e.method === element.method)
                 .map(e => new EndpointItem(
-                    e,
-                    this._extensionUri,
+                    e, this._extensionUri,
                     this._errorMap.get(`${e.method}:${e.path}`),
                     undefined,
                     this._authEndpoints.has(`${e.method}:${e.path}`)
                 ))
         }
 
+        // Module group children — recursive
         if (element instanceof ModuleGroupItem) {
-            const children = this._visibleEndpoints()
-                .filter(e => inferModule(e.path) === element.moduleName)
-            if (this._sortMode === "alpha") {
-                children.sort((a, b) => a.path.localeCompare(b.path))
-            }
-            return children.map(e => new EndpointItem(
-                e,
-                this._extensionUri,
-                this._errorMap.get(`${e.method}:${e.path}`),
-                element.moduleName,
-                this._authEndpoints.has(`${e.method}:${e.path}`)
-            ))
+            const scoped = this._visibleEndpoints().filter(e =>
+                endpointBelongsTo(e.path, element.modulePath)
+            )
+            return buildModuleTree(scoped, element.modulePath, ctx)
         }
 
         return []
     }
+
+    // ── Private ───────────────────────────────────────────────────────────────
 
     private _visibleEndpoints(): ApiEndpoint[] {
         let list = [...this._endpoints]
@@ -225,133 +220,4 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
             return new MethodGroupItem(method, count)
         })
     }
-
-    private _groupByModule(endpoints: ApiEndpoint[]): vscode.TreeItem[] {
-        const moduleMap = new Map<string, number>()
-        for (const e of endpoints) {
-            const mod = inferModule(e.path)
-            moduleMap.set(mod, (moduleMap.get(mod) ?? 0) + 1)
-        }
-
-        const keys = [...moduleMap.keys()]
-        if (keys.length === 1 && keys[0] === "other") {
-            return [
-                new InfoItem("No modules detected — paths have no named segments", "info"),
-                ...this._groupByMethod(endpoints)
-            ]
-        }
-
-        // Apply sort within module groups too
-        const sortedKeys = this._sortMode === "alpha" ? keys.sort() : keys
-        return sortedKeys.map(mod => new ModuleGroupItem(mod, moduleMap.get(mod)!))
-    }
-}
-
-// ── Tree items ────────────────────────────────────────────────────────────────
-
-class MethodGroupItem extends vscode.TreeItem {
-    constructor(public readonly method: string, count: number) {
-        super(method, vscode.TreeItemCollapsibleState.Expanded)
-        this.description  = `${count}`
-        this.tooltip      = `${method} — ${count} endpoint${count !== 1 ? "s" : ""}`
-        this.iconPath     = new vscode.ThemeIcon(
-            "symbol-method",
-            new vscode.ThemeColor(METHOD_COLORS[method] ?? "foreground")
-        )
-        this.contextValue = "methodGroup"
-    }
-}
-
-class ModuleGroupItem extends vscode.TreeItem {
-    constructor(public readonly moduleName: string, count: number) {
-        super(moduleName, vscode.TreeItemCollapsibleState.Expanded)
-        this.description  = `${count}`
-        this.tooltip      = `${moduleName} — ${count} endpoint${count !== 1 ? "s" : ""}`
-        this.iconPath     = new vscode.ThemeIcon("folder")
-        this.contextValue = "moduleGroup"
-    }
-}
-
-class EndpointItem extends vscode.TreeItem {
-    constructor(
-        public readonly endpoint:  ApiEndpoint,
-        extensionUri:              vscode.Uri,
-        errorStatus?:              number,
-        moduleContext?:            string,
-        isAuth?:                   boolean
-    ) {
-        // Strip module prefix in module-group view to reduce noise
-        // e.g. in "module-a" group: /module-a/create → /create, /module-a/ → /
-        let displayPath = endpoint.path
-        if (moduleContext) {
-            const prefix = `/${moduleContext}`
-            if (displayPath.startsWith(prefix)) {
-                displayPath = displayPath.slice(prefix.length) || "/"
-            }
-        }
-
-        super(displayPath, vscode.TreeItemCollapsibleState.None)
-
-        this.description = endpoint.summary || ""
-
-        if (errorStatus) {
-            this.description = `${endpoint.summary || ""}  · ${errorStatus}`.trim()
-            this.iconPath    = new vscode.ThemeIcon(
-                "error",
-                new vscode.ThemeColor("list.errorForeground")
-            )
-        } else if (isAuth) {
-            // Auth endpoint — show key icon with method color
-            this.iconPath = new vscode.ThemeIcon(
-                "key",
-                new vscode.ThemeColor(METHOD_COLORS[endpoint.method] ?? "foreground")
-            )
-        } else {
-            const svgFile = METHOD_SVG[endpoint.method]
-            if (svgFile) {
-                this.iconPath = {
-                    light: vscode.Uri.joinPath(extensionUri, "resources", "icons", svgFile),
-                    dark:  vscode.Uri.joinPath(extensionUri, "resources", "icons", svgFile),
-                }
-            } else {
-                this.iconPath = new vscode.ThemeIcon(
-                    "circle-small-filled",
-                    new vscode.ThemeColor(METHOD_COLORS[endpoint.method] ?? "foreground")
-                )
-            }
-        }
-
-        this.tooltip = new vscode.MarkdownString(
-            `**${endpoint.method}** \`${endpoint.path}\`` +
-            (endpoint.summary  ? `\n\n${endpoint.summary}` : "") +
-            (errorStatus       ? `\n\n⚠ Last request failed with **${errorStatus}**` : "") +
-            (endpoint.operationId ? `\n\n*operationId: \`${endpoint.operationId}\`*` : "")
-        )
-
-        this.command = {
-            command:   "apiExplorer.openRequest",
-            title:     "Open Request",
-            arguments: [endpoint],
-        }
-        this.contextValue = endpoint.operationId ? "endpointWithSource" : "endpoint"
-    }
-}
-
-class InfoItem extends vscode.TreeItem {
-    constructor(message: string, icon: string) {
-        super(message, vscode.TreeItemCollapsibleState.None)
-        this.iconPath     = new vscode.ThemeIcon(icon)
-        this.contextValue = "info"
-    }
-}
-
-export function inferModule(path: string): string {
-    const segments = path.split("/").filter(Boolean)
-    for (const seg of segments) {
-        if (SKIP_SEGMENTS.has(seg.toLowerCase())) continue
-        if (seg.startsWith("{")) continue
-        if (/^v\d+$/i.test(seg)) continue
-        return seg.toLowerCase()
-    }
-    return "other"
 }
