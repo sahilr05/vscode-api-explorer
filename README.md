@@ -98,7 +98,7 @@ Works with any response containing `access_token`, `token`, or `jwt` fields. Sup
 ## Getting Started
 
 1. Install the extension
-2. Open a project with a running FastAPI (or any OpenAPI) server
+2. Open a project with a running FastAPI server
 3. Click the API Explorer icon in the activity bar
 4. Endpoints appear automatically — click any to open the request panel
 
