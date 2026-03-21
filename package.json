@@ -56,16 +56,6 @@
     },
     "commands": [
       {
-        "command": "apiExplorer.openConfig",
-        "title": "Project Configuration",
-        "icon": "$(gear)"
-      },
-      {
-        "command": "apiExplorer.filterByModule",
-        "title": "Filter by Module",
-        "icon": "$(folder-library)"
-      },
-      {
         "command": "apiExplorer.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
@@ -96,13 +86,20 @@
       },
       {
         "command": "apiExplorer.filterByMethod",
-        "title": "Filter by Method",
-        "icon": "$(filter)"
+        "title": "Filter by Method"
+      },
+      {
+        "command": "apiExplorer.filterByModule",
+        "title": "Filter by Module"
       },
       {
         "command": "apiExplorer.toggleSort",
-        "title": "Toggle Sort Order",
-        "icon": "$(sort-precedence)"
+        "title": "Toggle Sort Order"
+      },
+      {
+        "command": "apiExplorer.filterAndSort",
+        "title": "Filter Endpoints",
+        "icon": "$(list-filter)"
       },
       {
         "command": "apiExplorer.clearHistory",
@@ -113,6 +110,11 @@
         "command": "apiExplorer.goToSource",
         "title": "Go to Source",
         "icon": "$(code)"
+      },
+      {
+        "command": "apiExplorer.openConfig",
+        "title": "Project Configuration",
+        "icon": "$(gear)"
       }
     ],
     "viewsContainers": {
@@ -173,34 +175,24 @@
           "group": "navigation@3"
         },
         {
-          "command": "apiExplorer.filterByModule",
+          "command": "apiExplorer.filterAndSort",
           "when": "view == apiExplorer.endpoints",
           "group": "navigation@4"
         },
         {
-          "command": "apiExplorer.filterByMethod",
+          "command": "apiExplorer.refresh",
           "when": "view == apiExplorer.endpoints",
           "group": "navigation@5"
         },
         {
-          "command": "apiExplorer.toggleSort",
+          "command": "apiExplorer.openConfig",
           "when": "view == apiExplorer.endpoints",
           "group": "navigation@6"
-        },
-        {
-          "command": "apiExplorer.refresh",
-          "when": "view == apiExplorer.endpoints",
-          "group": "navigation@7"
         },
         {
           "command": "apiExplorer.clearHistory",
           "when": "view == apiExplorer.history",
           "group": "navigation@1"
-        },
-        {
-          "command": "apiExplorer.openConfig",
-          "when": "view == apiExplorer.endpoints",
-          "group": "navigation@8"
         }
       ]
     }

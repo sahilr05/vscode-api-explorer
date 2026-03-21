@@ -210,63 +210,81 @@ export function activate(context: vscode.ExtensionContext) {
         }
     )
 
+    // ── Combined filter & sort ────────────────────────────────────────────────
     const filterMethodCommand = vscode.commands.registerCommand(
-        'apiExplorer.filterByMethod',
-        async () => {
-            const current = treeProvider.methodFilters
-            const items   = ALL_METHODS.map(m => ({
-                label:  m,
-                picked: current.size === 0 ? true : current.has(m),
-            }))
-            const picked = await vscode.window.showQuickPick(items, {
-                canPickMany: true,
-                title:       "Filter by HTTP Method",
-                placeHolder: "Select methods to show (all = no filter)",
-            })
-            if (!picked) return
-            treeProvider.setMethodFilters(
-                picked.length === ALL_METHODS.length || picked.length === 0
-                    ? new Set()
-                    : new Set(picked.map(p => p.label))
-            )
-        }
+        'apiExplorer.filterByMethod', () =>
+            vscode.commands.executeCommand('apiExplorer.filterAndSort')
     )
 
     const filterModuleCommand = vscode.commands.registerCommand(
-        'apiExplorer.filterByModule',
-        async () => {
-            const allModules = treeProvider.allModules
-            if (allModules.length === 0) {
-                vscode.window.showInformationMessage('API Explorer: No modules detected yet.')
-                return
-            }
-            const current = treeProvider.moduleFilters
-            const items   = allModules.map(m => ({
-                label:  m,
-                picked: current.size === 0 ? true : current.has(m),
-            }))
-            const picked = await vscode.window.showQuickPick(items, {
-                canPickMany: true,
-                title:       "Filter by Module",
-                placeHolder: "Select modules to show (all = no filter)",
-            })
-            if (!picked) return
-            treeProvider.setModuleFilters(
-                picked.length === allModules.length || picked.length === 0
-                    ? new Set()
-                    : new Set(picked.map(p => p.label))
-            )
-        }
+        'apiExplorer.filterByModule', () =>
+            vscode.commands.executeCommand('apiExplorer.filterAndSort')
     )
 
     const toggleSortCommand = vscode.commands.registerCommand(
-        'apiExplorer.toggleSort',
-        () => {
-            const next = treeProvider.sortMode === "default" ? "alpha" : "default"
-            treeProvider.setSortMode(next)
-            vscode.window.showInformationMessage(
-                `API Explorer: Sorted ${next === "alpha" ? "A → Z" : "by spec order"}`
+        'apiExplorer.toggleSort', () =>
+            vscode.commands.executeCommand('apiExplorer.filterAndSort')
+    )
+
+    const filterAndSortCommand = vscode.commands.registerCommand(
+        'apiExplorer.filterAndSort',
+        async () => {
+            const allModules   = treeProvider.allModules
+            const methodFilter = treeProvider.methodFilters
+            const moduleFilter = treeProvider.moduleFilters
+
+            type Item = vscode.QuickPickItem & { _id?: string }
+
+            const items: Item[] = [
+                // ── Methods ──────────────────────────────────────────────────
+                { label: 'HTTP Methods', kind: vscode.QuickPickItemKind.Separator },
+                ...ALL_METHODS.map(m => ({
+                    label:   m,
+                    picked:  methodFilter.size === 0 ? true : methodFilter.has(m),
+                    _id:     `method:${m}`,
+                })),
+                // ── Modules ───────────────────────────────────────────────────
+                ...(allModules.length > 0 ? [
+                    { label: 'Modules', kind: vscode.QuickPickItemKind.Separator },
+                    ...allModules.map(m => ({
+                        label:   m,
+                        picked:  moduleFilter.size === 0 ? true : moduleFilter.has(m),
+                        _id:     `module:${m}`,
+                    }))
+                ] : []),
+            ]
+
+            const picked = await vscode.window.showQuickPick(items, {
+                canPickMany:  true,
+                title:        'Filter Endpoints',
+                placeHolder:  'Select to apply — uncheck to remove',
+            })
+
+            if (!picked) return
+
+            // ── Apply method filter ───────────────────────────────────────────
+            const pickedMethods = picked
+                .filter(p => p._id?.startsWith('method:'))
+                .map(p => p._id!.replace('method:', ''))
+
+            treeProvider.setMethodFilters(
+                pickedMethods.length === ALL_METHODS.length || pickedMethods.length === 0
+                    ? new Set()
+                    : new Set(pickedMethods)
             )
+
+            // ── Apply module filter ───────────────────────────────────────────
+            if (allModules.length > 0) {
+                const pickedModules = picked
+                    .filter(p => p._id?.startsWith('module:'))
+                    .map(p => p._id!.replace('module:', ''))
+
+                treeProvider.setModuleFilters(
+                    pickedModules.length === allModules.length || pickedModules.length === 0
+                        ? new Set()
+                        : new Set(pickedModules)
+                )
+            }
         }
     )
 
@@ -282,7 +300,7 @@ export function activate(context: vscode.ExtensionContext) {
         goToSourceCommand,
         groupByMethodCommand, groupByModuleCommand,
         filterMethodCommand, filterModuleCommand,
-        toggleSortCommand,
+        toggleSortCommand, filterAndSortCommand,
         config,
     )
 }
