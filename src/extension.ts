@@ -8,6 +8,7 @@ import { ConfigPanel }          from './config/webview/configPanel'
 import { StatusBarManager }     from './statusBar/statusBarManager'
 import { HistoryManager }       from './history/historyManager'
 import { HistoryTreeProvider }  from './history/historyTreeProvider'
+import { AuthStore }            from './auth/authStore'
 import { goToSource }           from './navigation/sourceNavigator'
 import { ApiEndpoint }          from './types/endpoint'
 
@@ -17,21 +18,72 @@ export function activate(context: vscode.ExtensionContext) {
 
     const config       = new ConfigManager(context)
     const history      = new HistoryManager(context)
+    const authStore    = new AuthStore(context)
     const treeProvider = new EndpointTreeProvider([], context.extensionUri)
     const histProvider = new HistoryTreeProvider(history)
     const statusBar    = new StatusBarManager(config, context)
 
+    // ── Token expiry monitor ──────────────────────────────────────────────────
+    let _expiredAlertShown = false
+
+    const checkExpiry = async () => {
+        const activeToken = await authStore.getActiveToken()
+        if (!activeToken?.expiresAt) return
+
+        const remaining = activeToken.expiresAt - Date.now()
+
+        if (remaining <= 0 && !_expiredAlertShown) {
+            _expiredAlertShown = true
+            vscode.window.showWarningMessage(
+                `API Explorer: Auth token expired. Re-authenticate to continue.`,
+                'Open Login'
+            ).then(action => {
+                if (action === 'Open Login') {
+                    const [method] = activeToken.endpointKey.split(':')
+                    vscode.commands.executeCommand('apiExplorer.openRequest', {
+                        method, path: activeToken.endpointPath
+                    })
+                }
+            })
+        } else if (remaining > 0) {
+            _expiredAlertShown = false
+        }
+    }
+
+    checkExpiry()
+    const expiryTimer = setInterval(checkExpiry, 30_000)
+    context.subscriptions.push({ dispose: () => clearInterval(expiryTimer) })
+
+    // Restore auth endpoint markers in tree on startup
+    authStore.onDidChange(() => { _expiredAlertShown = false; checkExpiry() })
+
+    authStore.getAll().then(async tokens => {
+        treeProvider.setAuthEndpoints(tokens.map(t => t.endpointKey))
+
+        const activeToken = await authStore.getActiveToken()
+        if (activeToken && config.projectConfig.auth.type === 'none') {
+            await config.saveProjectConfig({
+                ...config.projectConfig,
+                auth: { type: 'bearer', token: activeToken.token }
+            })
+        }
+        checkExpiry()
+    })
+
     // ── Version update notification ───────────────────────────────────────────
     const currentVersion = vscode.extensions.getExtension('sahilrajpal.api-explorer')?.packageJSON?.version
-    const lastVersion    = context.globalState.get<string>('apiExplorer.lastVersion')
+    const lastVersion = context.globalState.get<string>('apiExplorer.lastVersion')
 
     if (currentVersion && lastVersion && currentVersion !== lastVersion) {
         vscode.window.showInformationMessage(
-            `API Explorer updated to v${currentVersion} — Auth headers, default headers, and project config panel added. Click the ⚙ icon in the sidebar to set up.`,
-            'Open Config'
+            `API Explorer updated to v${currentVersion}`,
+            "What's New",
         ).then(action => {
-            if (action === 'Open Config') {
-                vscode.commands.executeCommand('apiExplorer.openConfig')
+            if (action === "What's New") {
+                const changelogUri = vscode.Uri.joinPath(
+                    context.extensionUri, 'CHANGELOG.md'
+                )
+                vscode.commands.executeCommand('markdown.showPreview', changelogUri)
             }
         })
     }
@@ -100,10 +152,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     loadEndpoints()
 
-    // Re-load when base URL changes from config panel
-    // Also notify all open request panels to refresh their auth badge
+    // Re-load spec when base URL or auth config changes
+    config.onDidChange(() => loadEndpoints())
+
+    // Update auth badge on all open panels when config changes
     config.onDidChange(() => {
-        loadEndpoints()
         RequestPanel.notifyConfigChanged(config.auth)
     })
 
@@ -152,7 +205,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     const openRequestCommand = vscode.commands.registerCommand(
         'apiExplorer.openRequest',
-        (endpoint: ApiEndpoint) => RequestPanel.create(endpoint, context, config, history, treeProvider)
+        (endpoint: ApiEndpoint) => RequestPanel.create(endpoint, context, config, history, treeProvider, authStore)
     )
 
     const openFromHistoryCommand = vscode.commands.registerCommand(
@@ -163,7 +216,7 @@ export function activate(context: vscode.ExtensionContext) {
                 path:    entry.path,
                 summary: `From history — ${entry.status} ${entry.statusText}`,
             }
-            RequestPanel.create(endpoint, context, config, history, treeProvider, {
+            RequestPanel.create(endpoint, context, config, history, treeProvider, authStore, {
                 requestBody:  entry.body,
                 responseBody: entry.responseBody,
                 status:       entry.status,
@@ -301,6 +354,7 @@ export function activate(context: vscode.ExtensionContext) {
         groupByMethodCommand, groupByModuleCommand,
         filterMethodCommand, filterModuleCommand,
         toggleSortCommand, filterAndSortCommand,
+        authStore,
         config,
     )
 }

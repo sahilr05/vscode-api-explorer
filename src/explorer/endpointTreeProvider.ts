@@ -34,6 +34,7 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
     private _moduleFilters: Set<string>   = new Set()
     private _offlineUrl:    string | undefined
     private _errorMap:      Map<string, number> = new Map()
+    private _authEndpoints: Set<string>   = new Set() // endpoints with stored tokens
 
     private _onDidChangeTreeData = new vscode.EventEmitter<void>()
     readonly onDidChangeTreeData: vscode.Event<void> = this._onDidChangeTreeData.event
@@ -83,6 +84,23 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
 
     setModuleFilters(modules: Set<string>) {
         this._moduleFilters = modules
+        this._onDidChangeTreeData.fire()
+    }
+
+    // Called from requestHandler after token stored
+    setAuthEndpoint(key: string) {
+        this._authEndpoints.add(key)
+        this._onDidChangeTreeData.fire()
+    }
+
+    clearAuthEndpoint(key: string) {
+        this._authEndpoints.delete(key)
+        this._onDidChangeTreeData.fire()
+    }
+
+    // Called on startup to restore auth endpoints from store
+    setAuthEndpoints(keys: string[]) {
+        this._authEndpoints = new Set(keys)
         this._onDidChangeTreeData.fire()
     }
 
@@ -151,7 +169,9 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
                 .map(e => new EndpointItem(
                     e,
                     this._extensionUri,
-                    this._errorMap.get(`${e.method}:${e.path}`)
+                    this._errorMap.get(`${e.method}:${e.path}`),
+                    undefined,
+                    this._authEndpoints.has(`${e.method}:${e.path}`)
                 ))
         }
 
@@ -165,7 +185,8 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
                 e,
                 this._extensionUri,
                 this._errorMap.get(`${e.method}:${e.path}`),
-                element.moduleName   // pass module so we can strip prefix
+                element.moduleName,
+                this._authEndpoints.has(`${e.method}:${e.path}`)
             ))
         }
 
@@ -256,7 +277,8 @@ class EndpointItem extends vscode.TreeItem {
         public readonly endpoint:  ApiEndpoint,
         extensionUri:              vscode.Uri,
         errorStatus?:              number,
-        moduleContext?:            string     // if set, strip this module prefix from path
+        moduleContext?:            string,
+        isAuth?:                   boolean
     ) {
         // Strip module prefix in module-group view to reduce noise
         // e.g. in "module-a" group: /module-a/create → /create, /module-a/ → /
@@ -277,6 +299,12 @@ class EndpointItem extends vscode.TreeItem {
             this.iconPath    = new vscode.ThemeIcon(
                 "error",
                 new vscode.ThemeColor("list.errorForeground")
+            )
+        } else if (isAuth) {
+            // Auth endpoint — show key icon with method color
+            this.iconPath = new vscode.ThemeIcon(
+                "key",
+                new vscode.ThemeColor(METHOD_COLORS[endpoint.method] ?? "foreground")
             )
         } else {
             const svgFile = METHOD_SVG[endpoint.method]

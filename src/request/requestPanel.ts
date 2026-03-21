@@ -10,6 +10,7 @@ import { ApiEndpoint }    from "../types/endpoint"
 import { ConfigManager }  from "../config/configManager"
 import { HistoryManager } from "../history/historyManager"
 import { EndpointTreeProvider } from "../explorer/endpointTreeProvider"
+import { AuthStore }            from "../auth/authStore"
 import { renderPanel, RestoredState } from "./webview/template"
 import { attachRequestHandler }       from "./requestHandler"
 
@@ -31,15 +32,15 @@ export class RequestPanel {
         config:       ConfigManager,
         history:      HistoryManager,
         treeProvider: EndpointTreeProvider,
+        authStore:    AuthStore,
         restored?:    RestoredState,
         panelKey?:    string
     ) {
-        // History entries — dedicated tab per entry
         if (panelKey) {
             const existing = this._historyPanels.get(panelKey)
             if (existing) { existing.reveal(vscode.ViewColumn.Active); return }
 
-            const p = this._makePanel(panelKey, endpoint, config, history, treeProvider, restored)
+            const p = this._makePanel(panelKey, endpoint, config, history, treeProvider, authStore, restored)
             this._historyPanels.set(panelKey, p)
             p.onDidDispose(() => this._historyPanels.delete(panelKey))
             return
@@ -47,12 +48,10 @@ export class RequestPanel {
 
         const key = `${endpoint.method}:${endpoint.path}`
 
-        // Already open — just reveal it
         const existing = this._panels.get(key)
         if (existing) { existing.reveal(vscode.ViewColumn.Active); return }
 
-        // New endpoint — open a new tab
-        const panel = this._makePanel(key, endpoint, config, history, treeProvider, restored)
+        const panel = this._makePanel(key, endpoint, config, history, treeProvider, authStore, restored)
         this._panels.set(key, panel)
         panel.onDidDispose(() => {
             this._panels.delete(key)
@@ -67,6 +66,7 @@ export class RequestPanel {
         config:       ConfigManager,
         history:      HistoryManager,
         treeProvider: EndpointTreeProvider,
+        authStore:    AuthStore,
         restored?:    RestoredState
     ): vscode.WebviewPanel {
 
@@ -80,7 +80,7 @@ export class RequestPanel {
         panel.webview.html = renderPanel(endpoint, config.baseUrl, restored, config.auth)
 
         const disposable = attachRequestHandler(
-            panel, endpoint, config, history, treeProvider, () => {}
+            panel, endpoint, config, history, treeProvider, authStore, () => {}
         )
         this._disposables.set(key, disposable)
         panel.onDidDispose(() => disposable.dispose())

@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.4.0] - 2026-03-21
+
+### Added
+- **Auth token auto-extract** — extension detects login endpoints and prompts to store token automatically
+- **"🔑 Use as Auth" button** — appears on any response containing a token field, one click stores it
+- Auth token restored automatically on VSCode restart
+- Token expiry warning notification — alerts when JWT token expires with "Open Login" shortcut
+- **Method badge icons** — colored SVG pill badges per HTTP method in the sidebar tree
+- **5xx error highlight** — red error icon on endpoints that returned a server error, clears on next success
+- **Filter & Sort combined** — single toolbar icon replaces 3 separate filter/sort icons
+- **Collapsible Expected Response** — schema preview collapses automatically when real response arrives
+- Response capped at 400px with scroll — no more infinite scroll panels
+- History timestamps now show static time (e.g. `7:01 PM`) instead of relative "10s ago"
+- Module prefix stripped in module-group tree view — `/module-a/create` shows as `/create`
+- "Copy path" button on request panel header
+
+### Fixed
+- Auth badge now updates on all open panels simultaneously when config changes
+- Config panel opens in correct editor pane
+- History no longer shows stale relative timestamps
+
 ## [0.3.0] - 2026-03-19
 
 ### Added

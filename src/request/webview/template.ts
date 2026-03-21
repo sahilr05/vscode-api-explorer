@@ -61,6 +61,7 @@ export function renderPanel(
     // ── Auth badge ───────────────────────────────────────────────────────────
     const authType  = auth?.type ?? "none"
     const authStyle = AUTH_LABELS[authType] ?? AUTH_LABELS.none
+
     const authBadge = `
         <span id="authBadge" style="
             font-family:'JetBrains Mono','Fira Code',monospace;
@@ -106,12 +107,17 @@ export function renderPanel(
 
     // ── Expected response schema (read-only hint) ────────────────────────────
     const responseSchemaHtml = responseSchema ? `
-        <div class="section">
-            <h3 class="section-title">Expected Response</h3>
-            <div class="schema-label">schema preview — read only</div>
-            <div class="schema-preview">${responseSchema
-                .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-            }</div>
+        <div class="section" id="schemaSection">
+            <h3 class="section-title" style="cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none" onclick="toggleSchema()">
+                Expected Response
+                <span id="schemaToggle" style="font-size:10px;color:rgba(204,204,204,.35);font-weight:400;text-transform:none;letter-spacing:0">▼ hide</span>
+            </h3>
+            <div id="schemaBody">
+                <div class="schema-label">schema preview — read only</div>
+                <div class="schema-preview">${responseSchema
+                    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                }</div>
+            </div>
         </div>` : ""
 
     // ── Restored response (from history) ────────────────────────────────────
@@ -150,10 +156,11 @@ export function renderPanel(
         <div class="header">
             <span class="method-badge">${endpoint.method}</span>
             <span class="endpoint-path">${formattedPath}</span>
-            <button class="copy-btn" id="copyBtn" onclick="copyPath()" title="Copy path">
-                <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M4 4v-2a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2h-2v2a2 2 0 01-2 2H2a2 2 0 01-2-2V6a2 2 0 012-2h2zm2 0h4a2 2 0 012 2v6h2V2H6v2zM2 6v8h6V6H2z"/>
-                </svg>
+            <button class="copy-btn" id="copyBtn" onclick="copyPath()" title="Copy path"
+                style="background:transparent;border:1px solid rgba(255,255,255,.12);cursor:pointer;color:rgba(204,204,204,.4);font-size:10px;font-family:inherit;padding:2px 8px;transition:all .1s;flex-shrink:0"
+                onmouseover="this.style.color='#ccc';this.style.borderColor='rgba(255,255,255,.3)'"
+                onmouseout="this.style.color='rgba(204,204,204,.4)';this.style.borderColor='rgba(255,255,255,.12)'">
+                Copy path
             </button>
         </div>
 

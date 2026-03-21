@@ -3,12 +3,12 @@ import * as vscode from 'vscode'
 export type AuthType = 'none' | 'bearer' | 'apikey' | 'basic'
 
 export interface AuthConfig {
-    type:        AuthType
-    token?:      string   // bearer token
-    apiKeyName?: string   // header name for api key e.g. "X-API-Key"
-    apiKeyValue?: string
-    basicUser?:  string
-    basicPass?:  string
+    type:          AuthType
+    token?:        string
+    apiKeyName?:   string
+    apiKeyValue?:  string
+    basicUser?:    string
+    basicPass?:    string
 }
 
 export interface ProjectConfig {

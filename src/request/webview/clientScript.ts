@@ -37,13 +37,8 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
     vscode.postMessage({ type: 'openConfig' })
   }
 
-  function iconCopy() {
-    return '<svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M4 4v-2a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2h-2v2a2 2 0 01-2 2H2a2 2 0 01-2-2V6a2 2 0 012-2h2zm2 0h4a2 2 0 012 2v6h2V2H6v2zM2 6v8h6V6H2z"/></svg>'
-  }
-
-  function iconCheck() {
-    return '<svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>'
-  }
+  function iconCopy()  { return 'Copy path' }
+  function iconCheck() { return '✓ Copied' }
 
   const AUTH_LABELS = {
     bearer: { label: 'Bearer',     color: '#10b981' },
@@ -60,13 +55,13 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
 
     // Config changed — update auth badge without re-rendering the whole panel
     if (msg.type === 'configUpdated') {
-      const auth    = msg.auth
-      const style   = AUTH_LABELS[auth?.type] ?? AUTH_LABELS.none
-      const badge   = document.getElementById('authBadge')
+      const auth  = msg.auth
+      const style = AUTH_LABELS[auth?.type] ?? AUTH_LABELS.none
+      const badge = document.getElementById('authBadge')
       if (badge) {
-        badge.textContent        = style.label
-        badge.style.borderColor  = style.color
-        badge.style.color        = style.color
+        badge.textContent       = style.label
+        badge.style.borderColor = style.color
+        badge.style.color       = style.color
       }
       return
     }
@@ -77,11 +72,23 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
     if (msg.type === 'response') {
       const cls = msg.status >= 500 ? 's5xx' : msg.status >= 400 ? 's4xx' : msg.status >= 300 ? 's3xx' : 's2xx'
       const fmt = typeof msg.data === 'string' ? msg.data : JSON.stringify(msg.data, null, 2)
+
+      // Detect token in response for manual "Use as Auth" button
+      const detectedToken = detectToken(msg.data)
+
       area.innerHTML = \`
         <div class="response-meta">
           <span class="status-badge \${cls}">\${msg.status} \${msg.statusText}</span>
           <span class="elapsed">\${msg.elapsed}ms</span>
           <div style="margin-left:auto;display:flex;gap:6px">
+            \${detectedToken ? \`<button onclick="useAsAuth('\${detectedToken}')" style="
+              background:transparent;border:1px solid #10b981;
+              color:#10b981;font-size:10px;font-family:inherit;
+              padding:2px 8px;cursor:pointer;transition:all .1s;
+            " onmouseover="this.style.opacity='.7'"
+               onmouseout="this.style.opacity='1'">
+              🔑 Use as Auth
+            </button>\` : ''}
             <button onclick="copyResponse()" style="
               background:transparent;border:1px solid rgba(255,255,255,.12);
               color:rgba(204,204,204,.5);font-size:10px;font-family:inherit;
@@ -102,8 +109,8 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
         </div>
         <div class="code-block response-pre" id="currentResponse">\${highlight(fmt)}</div>\`
 
-      // Store raw response for copy/open actions
       window._lastResponse = fmt
+      collapseSchema()
 
     } else if (msg.type === 'error') {
       area.innerHTML = \`
@@ -114,7 +121,44 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
     }
   })
 
-  // ── Response actions ──────────────────────────────────────────────────────
+  // ── Schema toggle ─────────────────────────────────────────────────────────
+  let _schemaVisible = true
+  function toggleSchema() {
+    _schemaVisible = !_schemaVisible
+    const body   = document.getElementById('schemaBody')
+    const toggle = document.getElementById('schemaToggle')
+    if (body)   body.style.display   = _schemaVisible ? 'block' : 'none'
+    if (toggle) toggle.textContent   = _schemaVisible ? '▼ hide' : '▶ show'
+  }
+
+  function collapseSchema() {
+    if (!_schemaVisible) return
+    _schemaVisible = false
+    const body   = document.getElementById('schemaBody')
+    const toggle = document.getElementById('schemaToggle')
+    if (body)   body.style.display = 'none'
+    if (toggle) toggle.textContent = '▶ show'
+  }
+  function detectToken(data) {
+    if (!data || typeof data !== 'object') return null
+    const fields = ['access_token','token','jwt','id_token','auth_token','accessToken']
+    for (const f of fields) {
+      if (typeof data[f] === 'string' && data[f].length > 10) return data[f]
+    }
+    for (const key of Object.keys(data)) {
+      const nested = data[key]
+      if (nested && typeof nested === 'object') {
+        for (const f of fields) {
+          if (typeof nested[f] === 'string' && nested[f].length > 10) return nested[f]
+        }
+      }
+    }
+    return null
+  }
+
+  function useAsAuth(token) {
+    vscode.postMessage({ type: 'useAsAuth', token })
+  }
   function copyResponse() {
     if (!window._lastResponse) return
     navigator.clipboard.writeText(window._lastResponse)
