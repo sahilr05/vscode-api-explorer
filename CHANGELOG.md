@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.0] - 2026-04-11
+
+### Fixed
+- Source navigation rewritten; greps for FastAPI route decorators directly instead of parsing operationId, fixing false matches in pip internals and venv packages
+
 ## [0.4.1] - 2026-03-21
 
 ### Added
