@@ -10,6 +10,7 @@ import { HistoryManager }       from './history/historyManager'
 import { HistoryTreeProvider }  from './history/historyTreeProvider'
 import { AuthStore }            from './auth/authStore'
 import { CasesStore }           from './cases/casesStore'
+import { registerSmokeTest }    from './smoke/smokeTest'
 import { goToSource }           from './navigation/sourceNavigator'
 import { ApiEndpoint }          from './types/endpoint'
 
@@ -343,6 +344,9 @@ export function activate(context: vscode.ExtensionContext) {
         }
     )
 
+    // ── Smoke test (run-all module / whole surface) ───────────────────────────
+    const smokeCommands = registerSmokeTest(context, treeProvider, cases, config, authStore)
+
     // ── Initial context ───────────────────────────────────────────────────────
     vscode.commands.executeCommand('setContext', 'apiExplorer.groupMode', 'module')
     vscode.commands.executeCommand('setContext', 'apiExplorer.searchActive', false)
@@ -359,5 +363,6 @@ export function activate(context: vscode.ExtensionContext) {
         authStore,
         cases,
         config,
+        ...smokeCommands,
     )
 }

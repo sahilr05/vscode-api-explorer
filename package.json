@@ -115,6 +115,16 @@
         "command": "apiExplorer.openConfig",
         "title": "Project Configuration",
         "icon": "$(gear)"
+      },
+      {
+        "command": "apiExplorer.runAll",
+        "title": "Run Smoke Test",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "apiExplorer.runModule",
+        "title": "Run all in module",
+        "icon": "$(beaker)"
       }
     ],
     "viewsContainers": {
@@ -151,6 +161,11 @@
           "command": "apiExplorer.goToSource",
           "when": "view == apiExplorer.endpoints && viewItem == endpointWithSource",
           "group": "navigation"
+        },
+        {
+          "command": "apiExplorer.runModule",
+          "when": "view == apiExplorer.endpoints && viewItem == moduleGroup",
+          "group": "navigation"
         }
       ],
       "view/title": [
@@ -180,14 +195,19 @@
           "group": "navigation@4"
         },
         {
-          "command": "apiExplorer.refresh",
+          "command": "apiExplorer.runAll",
           "when": "view == apiExplorer.endpoints",
           "group": "navigation@5"
         },
         {
-          "command": "apiExplorer.openConfig",
+          "command": "apiExplorer.refresh",
           "when": "view == apiExplorer.endpoints",
           "group": "navigation@6"
+        },
+        {
+          "command": "apiExplorer.openConfig",
+          "when": "view == apiExplorer.endpoints",
+          "group": "navigation@7"
         },
         {
           "command": "apiExplorer.clearHistory",

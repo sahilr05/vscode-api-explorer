@@ -118,6 +118,10 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
         return [...new Set(this._endpoints.map(e => inferModule(e.path)))].sort()
     }
 
+    get endpoints(): ApiEndpoint[] {
+        return [...this._endpoints]
+    }
+
     // ── TreeDataProvider ──────────────────────────────────────────────────────
 
     getTreeItem(element: vscode.TreeItem): vscode.TreeItem { return element }
