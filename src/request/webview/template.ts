@@ -197,6 +197,7 @@ export function renderPanel(
             </select>
             <button class="cases-btn" onclick="saveCase()" title="Save current inputs as a named case">＋ Save current</button>
             <button class="cases-btn cases-del" id="deleteCaseBtn" onclick="deleteCase()" style="display:none" title="Delete selected case">✕</button>
+            <button class="cases-btn cases-run" id="runAllBtn" onclick="runAllCases()" style="display:none" title="Fire all saved cases for this endpoint">▶ Run all</button>
         </div>
 
         <div class="panes${hasInputs ? "" : " single"}">

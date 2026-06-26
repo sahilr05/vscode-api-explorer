@@ -40,6 +40,25 @@ export function getStyles(color: string): string {
     .cases-btn{background:transparent;border:1px solid rgba(255,255,255,.12);color:rgba(204,204,204,.5);font-family:inherit;font-size:10px;padding:3px 8px;cursor:pointer;transition:all .1s;flex-shrink:0}
     .cases-btn:hover{color:#ccc;border-color:rgba(255,255,255,.3)}
     .cases-del:hover{color:#f43f5e;border-color:#f43f5e60}
+    .cases-run{color:${color};border-color:${color}50}
+    .cases-run:hover{color:${color};border-color:${color}}
+    .cases-btn:disabled{opacity:.5;cursor:not-allowed}
+
+    /* ── Run-all results ── */
+    .run-summary{font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;font-weight:700;margin-bottom:10px}
+    .run-summary .pass{color:#10b981}.run-summary .fail{color:#f43f5e}
+    .run-list{display:flex;flex-direction:column;gap:4px}
+    .run-row{display:flex;align-items:center;gap:10px;padding:6px 8px;background:#252526;border:1px solid rgba(255,255,255,.06);font-family:'JetBrains Mono','Fira Code',monospace;font-size:11px;cursor:pointer;transition:background .1s}
+    .run-row:hover{background:#2d2d30}
+    .run-row .rmark{flex-shrink:0;font-weight:700}
+    .run-row .rname{flex:1;color:#cccccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .run-row .rstatus{color:rgba(204,204,204,.7)}
+    .run-row .relapsed{color:rgba(204,204,204,.35)}
+    .run-row .rchevron{flex-shrink:0;color:rgba(204,204,204,.3);font-size:9px;width:10px}
+    .run-row.ok{border-left:2px solid #10b981}
+    .run-row.bad{border-left:2px solid #f43f5e}
+    .run-detail{margin:-2px 0 2px}
+    .run-detail .response-pre{max-height:280px;font-size:11px}
 
     /* ── Sections ── */
     .section{margin-bottom:28px}

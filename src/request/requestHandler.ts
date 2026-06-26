@@ -14,6 +14,7 @@ import { AuthStore }            from "../auth/authStore"
 import { CasesStore }           from "../cases/casesStore"
 import { shouldPromptForToken } from "../auth/authDetector"
 import { extractToken }         from "../auth/tokenExtractor"
+import { executeRequest, buildRequestFromCase } from "./executeRequest"
 
 export function attachRequestHandler(
     panel:           vscode.WebviewPanel,
@@ -122,42 +123,20 @@ export function attachRequestHandler(
             const { url, method, body } = message
             const contentType: string = message.contentType || 'application/json'
 
-            // Merge default headers + auth (manual config or auto-extracted token)
-            const activeToken   = await authStore.getActiveToken()
-            const authOverrides: Record<string, string> = activeToken && !isTokenExpired(activeToken)
-                ? { 'Authorization': `Bearer ${activeToken.token}` }
-                : {}
-
-            const headers = config.buildRequestHeaders({
-                ...(body ? { 'Content-Type': contentType } : {}),
-                ...authOverrides,
-            })
-
             try {
-                const startTime = Date.now()
-                const response  = await fetch(url, {
-                    method,
-                    headers,
-                    body: body || undefined,
-                })
-                const elapsed = Date.now() - startTime
-                const text    = await response.text()
-
-                let responseData: any
-                try   { responseData = JSON.parse(text) }
-                catch { responseData = text }
+                const result = await executeRequest({ method, url, body, contentType }, config, authStore)
 
                 panel.webview.postMessage({
                     type:       "response",
-                    status:     response.status,
-                    statusText: response.statusText,
-                    elapsed,
-                    data:       responseData,
+                    status:     result.status,
+                    statusText: result.statusText,
+                    elapsed:    result.elapsed,
+                    data:       result.data,
                 })
 
                 // Update sidebar error state
-                if (response.status >= 500) {
-                    treeProvider.setEndpointError(endpointKey, response.status)
+                if (result.status >= 500) {
+                    treeProvider.setEndpointError(endpointKey, result.status)
                 } else {
                     treeProvider.clearEndpointError(endpointKey)
                 }
@@ -166,26 +145,26 @@ export function attachRequestHandler(
                     method,
                     path:         endpoint.path,
                     url,
-                    status:       response.status,
-                    statusText:   response.statusText,
-                    elapsed,
+                    status:       result.status,
+                    statusText:   result.statusText,
+                    elapsed:      result.elapsed,
                     timestamp:    Date.now(),
-                    body:         body   || undefined,
-                    responseBody: typeof responseData === "string"
-                                    ? responseData
-                                    : JSON.stringify(responseData, null, 2),
+                    body:         body || undefined,
+                    responseBody: typeof result.data === "string"
+                                    ? result.data
+                                    : JSON.stringify(result.data, null, 2),
                 })
 
                 // ── Auth token detection ──────────────────────────────────────
                 // Only check on 2xx responses, only if not already ignored
                 if (
-                    response.status >= 200 &&
-                    response.status < 300 &&
+                    result.status >= 200 &&
+                    result.status < 300 &&
                     !authStore.isIgnored(endpointKey) &&
                     !authStore.isAuthEndpoint(endpointKey) &&
-                    shouldPromptForToken(endpoint, responseData)
+                    shouldPromptForToken(endpoint, result.data)
                 ) {
-                    const extracted = extractToken(responseData)
+                    const extracted = extractToken(result.data)
                     if (extracted) {
                         promptToStoreToken(
                             endpoint, endpointKey, extracted, authStore, treeProvider, config
@@ -197,11 +176,50 @@ export function attachRequestHandler(
                 panel.webview.postMessage({ type: "error", message: err.message })
             }
         }
-    })
-}
 
-function isTokenExpired(token: { expiresAt?: number }): boolean {
-    return !!token.expiresAt && token.expiresAt <= Date.now()
+        // ── Run all saved cases for this endpoint ─────────────────────────────
+        if (message.type === "runAllCases") {
+            const list = await cases.list(endpointKey)
+            if (!list.length) {
+                panel.webview.postMessage({ type: "runResults", results: [], summary: { passed: 0, total: 0 } })
+                return
+            }
+
+            // Write methods can modify data — confirm before replaying.
+            if (["POST", "PUT", "PATCH", "DELETE"].includes(endpoint.method)) {
+                const ok = await vscode.window.showWarningMessage(
+                    `Fire ${list.length} ${endpoint.method} request(s) against ${config.baseUrl}? This may modify data.`,
+                    { modal: true }, 'Run'
+                )
+                if (ok !== 'Run') {
+                    panel.webview.postMessage({ type: "runResults", results: [], summary: { passed: 0, total: 0, cancelled: true } })
+                    return
+                }
+            }
+
+            const results: any[] = []
+            for (const c of list) {
+                try {
+                    const req = buildRequestFromCase(endpoint, c, config.baseUrl)
+                    const r   = await executeRequest(req, config, authStore)
+                    results.push({
+                        name:       c.name,
+                        status:     r.status,
+                        statusText: r.statusText,
+                        elapsed:    r.elapsed,
+                        ok:         r.status >= 200 && r.status < 300,
+                        body:       typeof r.data === "string" ? r.data : JSON.stringify(r.data, null, 2),
+                    })
+                } catch (err: any) {
+                    results.push({ name: c.name, status: 0, statusText: 'error', elapsed: 0, ok: false, body: String(err?.message ?? err) })
+                }
+            }
+
+            const passed = results.filter(r => r.ok).length
+            panel.webview.postMessage({ type: "runResults", results, summary: { passed, total: results.length } })
+            return
+        }
+    })
 }
 
 async function promptToStoreToken(

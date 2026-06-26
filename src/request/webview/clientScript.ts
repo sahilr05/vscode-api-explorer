@@ -35,6 +35,8 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
       _cases.map(c => '<option>' + escHtmlAttr(c.name) + '</option>').join('')
     if (_cases.some(c => c.name === current)) sel.value = current
     updateDeleteBtn()
+    const runBtn = document.getElementById('runAllBtn')
+    if (runBtn) runBtn.style.display = _cases.length ? 'inline-block' : 'none'
   }
 
   function updateDeleteBtn() {
@@ -83,6 +85,64 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
     const sel = document.getElementById('casesSelect')
     if (!sel || !sel.value) return
     vscode.postMessage({ type: 'deleteCase', name: sel.value })
+  }
+
+  // ── Run all cases ───────────────────────────────────────────────────────────
+  function runAllCases() {
+    if (!_cases.length) return
+    const btn = document.getElementById('runAllBtn')
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Running…' }
+    collapseSchema()   // get the Expected Response out of the way, like Send does
+    const area = document.getElementById('responseArea')
+    if (area) area.innerHTML = '<div class="placeholder">Running ' + _cases.length + ' case' + (_cases.length === 1 ? '' : 's') + '…</div>'
+    vscode.postMessage({ type: 'runAllCases' })
+  }
+
+  function renderRunResults(results, summary) {
+    const btn = document.getElementById('runAllBtn')
+    if (btn) { btn.disabled = false; btn.textContent = '▶ Run all' }
+    const area = document.getElementById('responseArea')
+    if (!area) return
+
+    if (summary && summary.cancelled) {
+      area.innerHTML = '<div class="placeholder">Run cancelled</div>'
+      return
+    }
+    if (!results || !results.length) {
+      area.innerHTML = '<div class="placeholder">No cases to run</div>'
+      return
+    }
+
+    const failed = summary.total - summary.passed
+    const head = '<div class="run-summary">'
+      + '<span class="pass">' + summary.passed + ' passed</span>'
+      + (failed ? ' · <span class="fail">' + failed + ' failed</span>' : '')
+      + ' · ' + summary.total + ' total</div>'
+
+    const rows = results.map((r, i) => {
+      const ok      = r.ok
+      const detail  = r.body ? highlight(r.body) : '<span style="opacity:.4">(no response body)</span>'
+      return '<div class="run-row ' + (ok ? 'ok' : 'bad') + '" onclick="toggleRunRow(' + i + ')" title="Click to view response">'
+        + '<span class="rmark" style="color:' + (ok ? '#10b981' : '#f43f5e') + '">' + (ok ? '✓' : '✗') + '</span>'
+        + '<span class="rname">' + escHtmlAttr(r.name) + '</span>'
+        + '<span class="rstatus">' + (r.status || '—') + ' ' + escHtmlAttr(r.statusText || '') + '</span>'
+        + '<span class="relapsed">' + (r.elapsed || 0) + 'ms</span>'
+        + '<span class="rchevron" id="run-chev-' + i + '">▶</span>'
+        + '</div>'
+        + '<div class="run-detail" id="run-detail-' + i + '" style="display:none">'
+        + '<div class="code-block response-pre">' + detail + '</div></div>'
+    }).join('')
+
+    area.innerHTML = head + '<div class="run-list">' + rows + '</div>'
+  }
+
+  function toggleRunRow(i) {
+    const d = document.getElementById('run-detail-' + i)
+    const c = document.getElementById('run-chev-' + i)
+    if (!d) return
+    const show = d.style.display === 'none'
+    d.style.display = show ? 'block' : 'none'
+    if (c) c.textContent = show ? '▼' : '▶'
   }
 
   // First input on the page graduates this panel from preview → permanent
@@ -140,6 +200,12 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
     if (msg.type === 'casesList') {
       _cases = msg.cases || []
       renderCases(msg.available)
+      return
+    }
+
+    // Run-all results arrived — render them in the response area
+    if (msg.type === 'runResults') {
+      renderRunResults(msg.results, msg.summary)
       return
     }
 
