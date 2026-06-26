@@ -73,6 +73,8 @@ Fill in a request body and parameters, click **＋ Save current**, and name the 
 
 Cases are stored in a plain `.api-explorer/cases.json` file in your workspace, so you can **commit them to git and share them with your team** — no separate collection app, no account. And because only *your inputs* are saved (never the schema), they can't drift out of sync with your API the way a hand-maintained collection does. Your running server stays the single source of truth.
 
+![Named cases](https://raw.githubusercontent.com/sahilr05/vscode-api-explorer/refs/heads/main/images/named-cases.png)
+
 ---
 
 ### Native VSCode feel
