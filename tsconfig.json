@@ -4,6 +4,10 @@
     "target": "ES2022",
     "lib": ["ES2022", "DOM"],
     "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@modelcontextprotocol/sdk/*": ["node_modules/@modelcontextprotocol/sdk/dist/cjs/*"]
+    },
     "outDir": "out",
     "rootDir": "src",
     "sourceMap": true,

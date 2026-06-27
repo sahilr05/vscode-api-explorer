@@ -218,5 +218,8 @@
     "@types/node": "^22.14.0",
     "@types/vscode": "^1.85.0",
     "typescript": "~5.8.2"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0"
   }
 }
