@@ -1,79 +1,74 @@
 # Zerk
 
-**Test your APIs without leaving VSCode.** Zerk auto-discovers your FastAPI (and any OpenAPI-compliant) endpoints the moment your server starts - no collections to set up, no copy-pasting URLs, no switching to different app solely for API testing.
+**Test your API without leaving your editor.** Zerk auto-discovers your running server's endpoints from its OpenAPI spec, pre-fills request bodies from your real schemas, and lets you (or your AI agent) fire authenticated requests in one click. No collections to build, no setup, no copy-pasting URLs, no second app.
+
+> **Preview release** - feedback and bug reports welcome via [GitHub Issues](https://github.com/sahilr05/zerk/issues)
+
+<!--
+Screenshots in /images, all wired below:
+  hero, sidebar, request-panel, named-cases, smoke-test, mcp, config,
+  history, module-grouping, filter
+Note: history.png still uses generic /module-a/ paths (re-capture against rfx/rfi when convenient).
+-->
+
+![Zerk: the sidebar and an open request panel](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/hero.png)
 
 ---
 
 ## Why Zerk?
 
-Every API testing tool makes you do the same thing: open the app, create a collection, manually add your routes, set up environments. It's friction you repeat on every project.
+Every other API tool makes you repeat the same ritual on every project: open the app, create a collection, hand-add your routes, set up environments. Then your collection drifts out of sync with the code, because it's a second copy of your API that you maintain by hand.
 
-Zerk eliminates that entirely. If your server is running and exposes an OpenAPI spec (FastAPI does this by default at `/openapi.json`), the extension picks it up automatically - all your endpoints appear in the sidebar, pre-filled with sample request bodies inferred from your actual schemas, ready to fire.
+Zerk skips all of it. If your server is running and exposes an OpenAPI spec (FastAPI does this by default at `/openapi.json`), every endpoint shows up in the sidebar, pre-filled with sample bodies from your actual models, ready to fire. Your running server stays the single source of truth, so nothing ever drifts.
+
+And because Zerk holds your live spec and your auth, it can hand those to your AI agent too - so the agent can test the endpoint it just wrote, for real, without you pasting credentials into a chat.
 
 ---
 
 ## Features
 
-> **Preview release** - feedback welcome via [GitHub Issues](https://github.com/sahilr05/zerk/issues)
-
 ### Zero-config endpoint discovery
 
-Point it at your server once. Zerk fetches `/openapi.json`, parses every route, and populates the sidebar. No collection files, no manual entry.
+Point it at your server once. Zerk fetches `/openapi.json`, parses every route, and fills the sidebar. No collection files, no manual entry. It auto-reconnects when your server starts, and the base URL is remembered per-workspace, so each project finds its own server.
 
-The base URL is stored per-workspace - each project on your machine remembers its own server.
-
-![Request panel showing POST /module-a/ with pre-filled request body and expected response schema](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/request-panel.png)
+![Endpoints auto-discovered and grouped by module](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/sidebar.png)
 
 ---
 
-### Request bodies pre-filled from your schemas
+### A request panel that fills itself in
 
-Zerk resolves `$ref` pointers in your OpenAPI spec and builds a sample body from your actual Pydantic models. Open a `POST` endpoint and the body is already there - correct field names, correct types.
+Open any endpoint and the request is already set up for you:
 
-The expected response schema is shown as a read-only preview below the request body, so you know what to expect before you even hit Send.
+- **Bodies pre-filled from your schemas** - Zerk resolves `$ref` pointers and builds a sample body from your real models, with correct field names and types.
+- **Expected response preview** - the success-response schema is shown read-only, so you know what you're getting before you hit Send (it auto-collapses once a real response arrives).
+- **Two-pane layout** - inputs on the left, response on the right, so a wide editor is actually used.
+- **Content-type aware** - JSON and `application/x-www-form-urlencoded`, so FastAPI's `OAuth2PasswordRequestForm` logins (`/auth/login`) just work.
+- **↻ Reload schema** - changed a model and your server restarted? Reload the spec in place, no need to close and reopen the tab.
+- **Method-colored tabs**, path/query param inputs, syntax-highlighted responses, status + timing, copy path, copy response, and "↗ Open in Editor" to view a response in a real editor tab.
 
----
-
-### Group by module or method
-
-View your endpoints grouped by HTTP method, or switch to module view - which infers groupings from your URL structure automatically. `/auth/login`, `/auth/me` → `auth`. `/module-a/`, `/module-a/{item_id}` → `module-a`.
-
-![Sidebar showing endpoints grouped by module: auth, module-a, module-b](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/module-grouping.png)
-
----
-
-### Filter, search, sort
-
-Filter by HTTP method or module using a single combined picker - uncheck to hide, check to show, apply everything at once. Live search by path or description. All from the sidebar toolbar.
-
-![Filter & Sort picker showing method and module options](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/filter.png)
------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-### Request history
-
-Every request you fire is saved to a per-project history with method, status code, elapsed time, and full request/response bodies. Click any history entry to reopen it with everything restored exactly as it was.
-
-![Request panel with history showing multiple POST and GET requests](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/history.png)
+![Two-pane request panel with pre-filled body and live response](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/request-panel.png)
 
 ---
 
-### Named test cases - version them with your code
+### Named test cases - versioned with your code
 
-Fill in a request body and parameters, click **＋ Save current**, and name the input set - "valid data", "missing field", "admin token". Reopen the endpoint and pick any saved case from the dropdown to restore those exact inputs.
+Fill in a body and parameters, click **＋ Save current**, and name the input set: "valid data", "missing field", "admin token". Reopen the endpoint and pick any saved case to restore those exact inputs.
 
-Cases are stored in a plain `.api-explorer/cases.json` file in your workspace, so you can **commit them to git and share them with your team** - no separate collection app, no account. And because only *your inputs* are saved (never the schema), they can't drift out of sync with your API the way a hand-maintained collection does. Your running server stays the single source of truth.
+Cases live in a plain `.api-explorer/cases.json` file in your workspace, so you can **commit them to git and share them with your team** - no separate app, no account. Only *your inputs* are saved (never the schema), so they can't drift out of sync with your API the way a hand-maintained collection does.
 
-![Named cases](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/named-cases.png)
+![Saved cases on an endpoint](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/named-cases.png)
 
 ---
 
-### Run all cases - smoke-test your API in one click
+### Run all cases - smoke-test your API
 
-Once you've saved a few cases, fire them all at once. **▶ Run all** on an endpoint replays every saved case and shows an inline pass/fail list - expand any row to see the actual JSON it returned.
+Once you've saved a few cases, fire them all at once. **▶ Run all** on an endpoint replays every saved case and shows a pass/fail list; expand any row to see the actual JSON it returned.
 
-Need broader coverage? Right-click a module to run every case under it, or hit the **beaker icon** in the sidebar toolbar to smoke-test the whole API. Results land in a master-detail panel - endpoints grouped with a pass rollup on the left, the selected response on the right.
+Need broader coverage? Right-click a module to run everything under it, or hit the **beaker icon** in the toolbar to smoke-test the whole API. Results land in a panel with a **nested module tree** on the left (each folder with a pass rollup) and the selected response on the right.
 
-It's safe by default: only cases you explicitly saved are replayed, GET endpoints can be included automatically, and write methods (POST/PUT/PATCH/DELETE) stay out unless you opt in - with a confirmation before anything is modified. Because requests fire from the extension host against your live server, there's no setup and no CORS.
+Safe by default: only cases you explicitly saved are replayed, GET endpoints can be included automatically, and write methods (POST/PUT/PATCH/DELETE) stay out unless you opt in - with a confirmation before anything is modified. Requests fire from the extension host against your live server, so there's no CORS.
+
+![Smoke-test results: nested module tree and selected response](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/smoke-test.png)
 
 ---
 
@@ -81,69 +76,77 @@ It's safe by default: only cases you explicitly saved are replayed, GET endpoint
 
 Run **"Zerk: Enable MCP"** from the command palette and Zerk wires a Model Context Protocol server into your editor's agent (Windsurf, Cursor) or Claude Code. Now your agent can test the API it just wrote, for real:
 
-- **`fire_request`** - fires an authenticated request against your running server. The auth token is attached server-side and is **never exposed to the agent**, so you never paste credentials into a chat.
+- **`fire_request`** - fires an authenticated request against your running server. The auth token is attached server-side and **never exposed to the agent**, so you never paste credentials into a chat.
 - **`list_saved_cases`** - hands the agent your known-good payloads instead of letting it guess request shapes.
 - **`run_case`** - replays one of your saved cases, authenticated, and returns the real response.
 
-The point isn't "AI that writes tests" - it's an agent that **executes against your live, authenticated server with your tested payloads**. Ask it to "add a POST endpoint and make sure it works," and it writes the code, fires it, reads the real 422, fixes the schema, and re-fires - no context switch, no credentials in the chat.
+This isn't "AI that writes tests" - it's an agent that **executes against your live, authenticated server with your tested payloads**. Ask it to "add a POST endpoint and make sure it works," and it writes the code, fires it, reads the real `422`, fixes the schema, and re-fires - no context switch, no credentials in the chat.
+
+![An agent calling Zerk's tools to hit the live API](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/mcp.png)
 
 ---
 
-### Native VSCode feel
+### Group, filter, search
 
-- Each endpoint opens in its own tab - click the same endpoint again to return to it
-- Click "↗ Open in Editor" on any response to view it in a real VSCode editor tab - full search, folding, and formatting
-- Auto-connects when your server starts - no manual refresh needed
-- Requests fire from the extension host - no CORS issues ever
-- Status bar shows connection state and endpoint count
+Group endpoints by **module** (inferred from your URL structure, nested to any depth: `/rfx/rfp/{id}` becomes `rfx → rfp → ...`) or by **HTTP method**. Filter by method or module from a single combined picker, and live-search by path or description, all from the sidebar toolbar.
 
----
+![Endpoints nested into module folders](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/module-grouping.png)
 
-### Project Configuration
-
-One place to configure everything for your workspace - base URL, authentication, and default headers. Click the ⚙ icon in the sidebar toolbar to open it.
-
-![Project configuration panel showing base URL, auth type selector, and default headers](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/project-config.png)
-
-Set a Bearer token once and it's automatically attached to every request as `Authorization: Bearer ...`. Supports Bearer Token, API Key, and Basic Auth out of the box.
+![Combined method and module filter picker](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/filter.png)
 
 ---
 
-### Auth token auto-extract
+### Request history
 
-Fire your login endpoint once - Zerk detects the token in the response and asks if you want to use it. Click **Use as Auth** and it's stored securely and attached to every subsequent request automatically.
+Every request you fire is saved to a per-project history with method, status code, elapsed time, and full request/response bodies. Click any entry to reopen it with everything restored exactly as it was.
 
-Works with any response containing `access_token`, `token`, or `jwt` fields. Supports JWT expiry detection - you'll get a warning notification when your token expires with a one-click shortcut back to your login endpoint.
+![Request history](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/history.png)
+
+---
+
+### Project configuration & auth
+
+One place to configure everything for the workspace - base URL, authentication, and default headers - behind the ⚙ icon in the toolbar. Supports **Bearer Token, API Key, and Basic Auth**; set it once and it's attached to every request.
+
+**Auth token auto-extract:** fire your login endpoint once and Zerk detects the token in the response and offers to use it. Click **Use as Auth** and it's stored securely and attached to every subsequent request. Works with any response containing `access_token`, `token`, or `jwt`, and warns you when a JWT expires with a one-click shortcut back to your login endpoint.
+
+![Project configuration panel](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/config.png)
+
+---
+
+### Native editor feel
+
+- Each endpoint opens in its own tab; click the same endpoint again to return to it.
+- Auto-connects when your server starts - no manual refresh.
+- Requests fire from the extension host - **no CORS, ever**.
+- Status bar shows connection state and endpoint count.
 
 ---
 
 ## Getting Started
 
-1. Install the extension
-2. Open a project with a running FastAPI server
-3. Click the Zerk icon in the activity bar
-4. Endpoints appear automatically - click any to open the request panel
+1. Install the extension (VS Code Marketplace, or Open VSX for Cursor / Windsurf / VSCodium).
+2. Open a project with a running FastAPI (or any OpenAPI) server.
+3. Click the **Zerk** icon in the activity bar.
+4. Endpoints appear automatically - click any to open its request panel.
 
-**Default:** connects to `http://localhost:8000/openapi.json`
+**Default:** connects to `http://localhost:8000/openapi.json`. Change the URL, auth, or headers from the ⚙ Project Configuration panel (saved per-workspace).
 
-To change the URL, auth, or default headers: click the ⚙ icon in the sidebar toolbar to open the Project Configuration panel. Settings are saved per-workspace.
+To let an AI agent test your API, run **"Zerk: Enable MCP"** from the command palette.
 
 ---
 
 ## Configuration
 
-
 | Setting                  | Default                              | Description                                |
-| -------------------------- | -------------------------------------- | -------------------------------------------- |
+| ------------------------ | ------------------------------------ | ------------------------------------------ |
 | `apiExplorer.openapiUrl` | `http://localhost:8000/openapi.json` | URL of the OpenAPI spec to load on startup |
 
 ---
 
-## Built for FastAPI
+## Built for FastAPI, works with any OpenAPI server
 
-Zerk is built and optimized for FastAPI. Everything works out of the box - zero config, full `$ref` schema resolution, source navigation direct to your route handler, and content-type-aware request bodies (including `application/x-www-form-urlencoded` so `OAuth2PasswordRequestForm` logins like `/auth/login` just work).
-
-Support for other OpenAPI-compatible frameworks is planned for a future release.
+Zerk is built and tuned for FastAPI - zero config, full `$ref` schema resolution, and content-type-aware bodies (including `application/x-www-form-urlencoded`, so `OAuth2PasswordRequestForm` logins just work). Because it reads standard OpenAPI 3, it also works with any server that exposes a spec (NestJS, Spring, Litestar, Django-Ninja, and more). If your framework doesn't serve one, point Zerk at any OpenAPI URL.
 
 ---
 
