@@ -191,13 +191,18 @@ export function renderPanel(
         </div>
 
         <div class="cases-bar" id="casesBar">
-            <span class="cases-tag">Cases</span>
-            <select id="casesSelect" class="cases-select" onchange="loadCase()" title="Load a saved input set">
-                <option value="">- saved cases -</option>
-            </select>
-            <button class="cases-btn" onclick="saveCase()" title="Save current inputs as a named case">＋ Save current</button>
-            <button class="cases-btn cases-del" id="deleteCaseBtn" onclick="deleteCase()" style="display:none" title="Delete selected case">✕</button>
-            <button class="cases-btn cases-run" id="runAllBtn" onclick="runAllCases()" style="display:none" title="Fire all saved cases for this endpoint">▶ Run all</button>
+            <span id="casesGroup" style="display:contents">
+                <span class="cases-tag">Cases</span>
+                <select id="casesSelect" class="cases-select" onchange="loadCase()" title="Load a saved input set">
+                    <option value="">- saved cases -</option>
+                </select>
+                <button class="cases-btn" onclick="saveCase()" title="Save current inputs as a named case">＋ Save current</button>
+                <button class="cases-btn cases-del" id="deleteCaseBtn" onclick="deleteCase()" style="display:none" title="Delete selected case">✕</button>
+                <button class="cases-btn cases-run" id="runAllBtn" onclick="runAllCases()" style="display:none" title="Fire all saved cases for this endpoint">▶ Run all</button>
+            </span>
+            <button class="cases-btn cases-reload" id="refreshBtn" onclick="refreshSpec()" title="Reload the schema from the server (after a code change / restart)" style="margin-left:auto">↻ Reload schema</button>
+        </div>
+        <div id="refreshNote" style="display:none;font-size:11px;color:#f43f5e;margin-top:-12px;margin-bottom:16px"></div>
         </div>
 
         <div class="panes${hasInputs ? "" : " single"}">

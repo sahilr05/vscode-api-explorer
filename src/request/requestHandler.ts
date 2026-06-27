@@ -15,6 +15,9 @@ import { CasesStore }           from "../cases/casesStore"
 import { shouldPromptForToken } from "../auth/authDetector"
 import { extractToken }         from "../auth/tokenExtractor"
 import { executeRequest, buildRequestFromCase } from "./executeRequest"
+import { OpenApiLoader }        from "../openapi/openApiLoader"
+import { OpenApiParser }        from "../openapi/openApiParser"
+import { renderPanel }          from "./webview/template"
 
 export function attachRequestHandler(
     panel:           vscode.WebviewPanel,
@@ -29,6 +32,11 @@ export function attachRequestHandler(
 
     const endpointKey = `${endpoint.method}:${endpoint.path}`
 
+    // The endpoint's schema is captured at open time; a server restart can make it
+    // stale. The refresh button re-fetches the spec and updates this reference so
+    // re-renders and case replay use the latest schema.
+    let currentEndpoint = endpoint
+
     const postCases = async () => {
         panel.webview.postMessage({
             type:      "casesList",
@@ -41,6 +49,37 @@ export function attachRequestHandler(
 
         if (message.type === "markPermanent") {
             onMarkPermanent()
+            return
+        }
+
+        // ── Refresh schema from the live server (after a restart) ─────────────
+        if (message.type === "refreshSpec") {
+            try {
+                const spec      = await OpenApiLoader.fetchSpec(config.openApiUrl)
+                const endpoints = OpenApiParser.parse(spec)
+                treeProvider.setEndpoints(endpoints)   // keep the sidebar consistent too
+
+                const fresh = endpoints.find(
+                    e => e.method === endpoint.method && e.path === endpoint.path
+                )
+                if (!fresh) {
+                    panel.webview.postMessage({
+                        type:   "refreshFailed",
+                        reason: "This endpoint is no longer in the spec.",
+                    })
+                    return
+                }
+
+                currentEndpoint = fresh
+                // Regenerate from the fresh schema. The whole point of refreshing is to
+                // pick up new/changed fields, so do NOT carry the old body over.
+                panel.webview.html = renderPanel(fresh, config.baseUrl, undefined, config.auth)
+            } catch {
+                panel.webview.postMessage({
+                    type:   "refreshFailed",
+                    reason: "Could not reach the server.",
+                })
+            }
             return
         }
 
@@ -162,12 +201,12 @@ export function attachRequestHandler(
                     result.status < 300 &&
                     !authStore.isIgnored(endpointKey) &&
                     !authStore.isAuthEndpoint(endpointKey) &&
-                    shouldPromptForToken(endpoint, result.data)
+                    shouldPromptForToken(currentEndpoint, result.data)
                 ) {
                     const extracted = extractToken(result.data)
                     if (extracted) {
                         promptToStoreToken(
-                            endpoint, endpointKey, extracted, authStore, treeProvider, config
+                            currentEndpoint, endpointKey, extracted, authStore, treeProvider, config
                         )
                     }
                 }
@@ -186,9 +225,9 @@ export function attachRequestHandler(
             }
 
             // Write methods can modify data - confirm before replaying.
-            if (["POST", "PUT", "PATCH", "DELETE"].includes(endpoint.method)) {
+            if (["POST", "PUT", "PATCH", "DELETE"].includes(currentEndpoint.method)) {
                 const ok = await vscode.window.showWarningMessage(
-                    `Fire ${list.length} ${endpoint.method} request(s) against ${config.baseUrl}? This may modify data.`,
+                    `Fire ${list.length} ${currentEndpoint.method} request(s) against ${config.baseUrl}? This may modify data.`,
                     { modal: true }, 'Run'
                 )
                 if (ok !== 'Run') {
@@ -200,7 +239,7 @@ export function attachRequestHandler(
             const results: any[] = []
             for (const c of list) {
                 try {
-                    const req = buildRequestFromCase(endpoint, c, config.baseUrl)
+                    const req = buildRequestFromCase(currentEndpoint, c, config.baseUrl)
                     const r   = await executeRequest(req, config, authStore)
                     results.push({
                         name:       c.name,

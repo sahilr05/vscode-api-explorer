@@ -42,6 +42,8 @@ export function getStyles(color: string): string {
     .cases-del:hover{color:#f43f5e;border-color:#f43f5e60}
     .cases-run{color:${color};border-color:${color}50}
     .cases-run:hover{color:${color};border-color:${color}}
+    .cases-reload{color:rgba(204,204,204,.7);border-color:rgba(255,255,255,.18)}
+    .cases-reload:hover{color:#fff;border-color:rgba(255,255,255,.4)}
     .cases-btn:disabled{opacity:.5;cursor:not-allowed}
 
     /* ── Run-all results ── */

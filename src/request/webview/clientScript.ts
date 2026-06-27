@@ -24,11 +24,15 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
   }
 
   function renderCases(available) {
-    const bar = document.getElementById('casesBar')
-    const sel = document.getElementById('casesSelect')
-    if (!bar || !sel) return
-    if (available === false) { bar.style.display = 'none'; return }
+    const bar   = document.getElementById('casesBar')
+    const group = document.getElementById('casesGroup')
+    const sel   = document.getElementById('casesSelect')
+    if (!bar) return
+    // The bar (and the Reload-schema button) is always shown; only the cases
+    // controls hide when there's no workspace folder to store cases in.
     bar.style.display = 'flex'
+    if (group) group.style.display = available === false ? 'none' : 'contents'
+    if (available === false || !sel) return
 
     const current = sel.value
     sel.innerHTML = '<option value="">- saved cases -</option>' +
@@ -167,6 +171,17 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
     vscode.postMessage({ type: 'openConfig' })
   }
 
+  // ── Refresh schema from the server (after a restart) ──────────────────────
+  function refreshSpec() {
+    const btn  = document.getElementById('refreshBtn')
+    const note = document.getElementById('refreshNote')
+    if (note) note.style.display = 'none'
+    if (btn)  { btn.disabled = true; btn.innerHTML = '\\u2026' }
+    const bodyEl = document.getElementById('requestBody')
+    // On success the host re-renders the whole panel, so the button resets itself.
+    vscode.postMessage({ type: 'refreshSpec', currentBody: bodyEl ? bodyEl.value : null })
+  }
+
   function iconCopy()  { return 'Copy path' }
   function iconCheck() { return '✓ Copied' }
 
@@ -182,6 +197,15 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
     const msg  = event.data
     const area = document.getElementById('responseArea')
     const btn  = document.getElementById('sendBtn')
+
+    // Schema refresh failed - reset the button and show a brief note
+    if (msg.type === 'refreshFailed') {
+      const rbtn = document.getElementById('refreshBtn')
+      const note = document.getElementById('refreshNote')
+      if (rbtn) { rbtn.disabled = false; rbtn.innerHTML = '\\u21bb Reload schema' }
+      if (note) { note.textContent = '\\u26a0 ' + (msg.reason || 'Refresh failed'); note.style.display = 'block' }
+      return
+    }
 
     // Config changed - update auth badge without re-rendering the whole panel
     if (msg.type === 'configUpdated') {
