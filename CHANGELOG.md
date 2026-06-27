@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.9.0] - 2026-06-27
+
+### Added
+- **Reload schema button** - a "↻ Reload schema" button in the request panel re-fetches the live spec for the open endpoint and re-renders params, body, and the expected-response schema in place. After you change a model and your server restarts, you no longer have to close and reopen the tab to see the new fields.
+
+### Improved
+- **Smoke test results are now a nested module tree** - results group into collapsible folders by module (and sub-module), each with a pass rollup, so large APIs are navigable instead of a long flat list.
+
+### Removed
+- **Go to Source** - removed. It was unreliable and tied the extension to a single framework; a more robust, framework-agnostic approach may return later.
+
 ## [0.8.1] - 2026-06-27
 
 ### Changed
