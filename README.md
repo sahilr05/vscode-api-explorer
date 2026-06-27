@@ -28,7 +28,7 @@ The base URL is stored per-workspace - each project on your machine remembers it
 
 ### Request bodies pre-filled from your schemas
 
-Zerk resolves `$ref` pointers in your OpenAPI spec and builds a sample body from your actual Pydantic models. Open a `POST` endpoint and the body is already there — correct field names, correct types.
+Zerk resolves `$ref` pointers in your OpenAPI spec and builds a sample body from your actual Pydantic models. Open a `POST` endpoint and the body is already there - correct field names, correct types.
 
 The expected response schema is shown as a read-only preview below the request body, so you know what to expect before you even hit Send.
 
@@ -44,20 +44,10 @@ View your endpoints grouped by HTTP method, or switch to module view - which inf
 
 ### Filter, search, sort
 
-Filter by HTTP method or module using a single combined picker — uncheck to hide, check to show, apply everything at once. Live search by path or description. All from the sidebar toolbar.
+Filter by HTTP method or module using a single combined picker - uncheck to hide, check to show, apply everything at once. Live search by path or description. All from the sidebar toolbar.
 
 ![Filter & Sort picker showing method and module options](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/filter.png)
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
-
-### Go to Source
-
-Click any endpoint → jump directly to the route handler in your Python source. Zerk reads the `operationId` from your spec, extracts the function name, and opens the exact file and line. No searching required.
-
-Works automatically with FastAPI — no configuration needed.
-
-![Source navigation jumping from /auth/login in the sidebar to the login function in router.py](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/source-nav.png)
-
----
 
 ### Request history
 
@@ -67,23 +57,23 @@ Every request you fire is saved to a per-project history with method, status cod
 
 ---
 
-### Named test cases — version them with your code
+### Named test cases - version them with your code
 
-Fill in a request body and parameters, click **＋ Save current**, and name the input set — "valid data", "missing field", "admin token". Reopen the endpoint and pick any saved case from the dropdown to restore those exact inputs.
+Fill in a request body and parameters, click **＋ Save current**, and name the input set - "valid data", "missing field", "admin token". Reopen the endpoint and pick any saved case from the dropdown to restore those exact inputs.
 
-Cases are stored in a plain `.api-explorer/cases.json` file in your workspace, so you can **commit them to git and share them with your team** — no separate collection app, no account. And because only *your inputs* are saved (never the schema), they can't drift out of sync with your API the way a hand-maintained collection does. Your running server stays the single source of truth.
+Cases are stored in a plain `.api-explorer/cases.json` file in your workspace, so you can **commit them to git and share them with your team** - no separate collection app, no account. And because only *your inputs* are saved (never the schema), they can't drift out of sync with your API the way a hand-maintained collection does. Your running server stays the single source of truth.
 
 ![Named cases](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/named-cases.png)
 
 ---
 
-### Run all cases — smoke-test your API in one click
+### Run all cases - smoke-test your API in one click
 
-Once you've saved a few cases, fire them all at once. **▶ Run all** on an endpoint replays every saved case and shows an inline pass/fail list — expand any row to see the actual JSON it returned.
+Once you've saved a few cases, fire them all at once. **▶ Run all** on an endpoint replays every saved case and shows an inline pass/fail list - expand any row to see the actual JSON it returned.
 
-Need broader coverage? Right-click a module to run every case under it, or hit the **beaker icon** in the sidebar toolbar to smoke-test the whole API. Results land in a master-detail panel — endpoints grouped with a pass rollup on the left, the selected response on the right.
+Need broader coverage? Right-click a module to run every case under it, or hit the **beaker icon** in the sidebar toolbar to smoke-test the whole API. Results land in a master-detail panel - endpoints grouped with a pass rollup on the left, the selected response on the right.
 
-It's safe by default: only cases you explicitly saved are replayed, GET endpoints can be included automatically, and write methods (POST/PUT/PATCH/DELETE) stay out unless you opt in — with a confirmation before anything is modified. Because requests fire from the extension host against your live server, there's no setup and no CORS.
+It's safe by default: only cases you explicitly saved are replayed, GET endpoints can be included automatically, and write methods (POST/PUT/PATCH/DELETE) stay out unless you opt in - with a confirmation before anything is modified. Because requests fire from the extension host against your live server, there's no setup and no CORS.
 
 ---
 
@@ -99,7 +89,7 @@ It's safe by default: only cases you explicitly saved are replayed, GET endpoint
 
 ### Project Configuration
 
-One place to configure everything for your workspace — base URL, authentication, and default headers. Click the ⚙ icon in the sidebar toolbar to open it.
+One place to configure everything for your workspace - base URL, authentication, and default headers. Click the ⚙ icon in the sidebar toolbar to open it.
 
 ![Project configuration panel showing base URL, auth type selector, and default headers](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/project-config.png)
 
@@ -109,9 +99,9 @@ Set a Bearer token once and it's automatically attached to every request as `Aut
 
 ### Auth token auto-extract
 
-Fire your login endpoint once — Zerk detects the token in the response and asks if you want to use it. Click **Use as Auth** and it's stored securely and attached to every subsequent request automatically.
+Fire your login endpoint once - Zerk detects the token in the response and asks if you want to use it. Click **Use as Auth** and it's stored securely and attached to every subsequent request automatically.
 
-Works with any response containing `access_token`, `token`, or `jwt` fields. Supports JWT expiry detection — you'll get a warning notification when your token expires with a one-click shortcut back to your login endpoint.
+Works with any response containing `access_token`, `token`, or `jwt` fields. Supports JWT expiry detection - you'll get a warning notification when your token expires with a one-click shortcut back to your login endpoint.
 
 ---
 
@@ -120,7 +110,7 @@ Works with any response containing `access_token`, `token`, or `jwt` fields. Sup
 1. Install the extension
 2. Open a project with a running FastAPI server
 3. Click the Zerk icon in the activity bar
-4. Endpoints appear automatically — click any to open the request panel
+4. Endpoints appear automatically - click any to open the request panel
 
 **Default:** connects to `http://localhost:8000/openapi.json`
 
@@ -139,7 +129,7 @@ To change the URL, auth, or default headers: click the ⚙ icon in the sidebar t
 
 ## Built for FastAPI
 
-Zerk is built and optimized for FastAPI. Everything works out of the box — zero config, full `$ref` schema resolution, source navigation direct to your route handler, and content-type-aware request bodies (including `application/x-www-form-urlencoded` so `OAuth2PasswordRequestForm` logins like `/auth/login` just work).
+Zerk is built and optimized for FastAPI. Everything works out of the box - zero config, full `$ref` schema resolution, source navigation direct to your route handler, and content-type-aware request bodies (including `application/x-www-form-urlencoded` so `OAuth2PasswordRequestForm` logins like `/auth/login` just work).
 
 Support for other OpenAPI-compatible frameworks is planned for a future release.
 

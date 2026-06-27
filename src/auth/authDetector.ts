@@ -40,7 +40,7 @@ export function responseHasToken(body: any): boolean {
 }
 
 /**
- * Combined check — returns true if we should prompt the user.
+ * Combined check - returns true if we should prompt the user.
  * Either path OR response structure match is sufficient.
  */
 export function shouldPromptForToken(

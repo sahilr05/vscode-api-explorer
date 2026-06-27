@@ -98,7 +98,7 @@ export function getConfigScript(initialConfig: string): string {
     // ── Listen for response from extension ────────────────────────────────────
     window.addEventListener('message', (event) => {
         if (event.data.type === 'configSaved') {
-            // Config saved successfully — nothing extra needed
+            // Config saved successfully - nothing extra needed
         }
     })
 

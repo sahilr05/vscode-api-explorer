@@ -1,7 +1,7 @@
 {
   "name": "api-explorer",
-  "displayName": "Zerk — API testing in your editor",
-  "description": "Zerk kills the friction between writing and testing your API. Zero-config: auto-discovers your running FastAPI/OpenAPI server's endpoints, fires requests, saves test cases, and smoke-tests — without leaving your editor.",
+  "displayName": "Zerk: API testing in your editor",
+  "description": "Zerk kills the friction between writing and testing your API. Zero-config: auto-discovers your running FastAPI/OpenAPI server's endpoints, fires requests, saves test cases, and smoke-tests - without leaving your editor.",
   "version": "0.8.1",
   "private": false,
   "publisher": "sahilrajpal",
@@ -37,6 +37,9 @@
     "http",
     "client",
     "explorer",
+    "api explorer",
+    "api client",
+    "smoke test",
     "testing"
   ],
   "activationEvents": [
@@ -107,11 +110,6 @@
         "icon": "$(trash)"
       },
       {
-        "command": "apiExplorer.goToSource",
-        "title": "Go to Source",
-        "icon": "$(code)"
-      },
-      {
         "command": "apiExplorer.openConfig",
         "title": "Project Configuration",
         "icon": "$(gear)"
@@ -149,19 +147,7 @@
       ]
     },
     "menus": {
-      "view/item/inline": [
-        {
-          "command": "apiExplorer.goToSource",
-          "when": "view == apiExplorer.endpoints && viewItem == endpointWithSource",
-          "group": "inline"
-        }
-      ],
       "view/item/context": [
-        {
-          "command": "apiExplorer.goToSource",
-          "when": "view == apiExplorer.endpoints && viewItem == endpointWithSource",
-          "group": "navigation"
-        },
         {
           "command": "apiExplorer.runModule",
           "when": "view == apiExplorer.endpoints && viewItem == moduleGroup",

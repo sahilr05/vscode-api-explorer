@@ -131,7 +131,7 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
         // Offline state
         if (!element && this._offlineUrl) {
             return [
-                new InfoItem(`Server offline — waiting for ${this._offlineUrl}`, "loading~spin"),
+                new InfoItem(`Server offline - waiting for ${this._offlineUrl}`, "loading~spin"),
                 new InfoItem("Start your server to auto-connect", "info"),
                 new InfoItem("Wrong URL? Click ⚙ to change", "gear"),
             ]
@@ -167,7 +167,7 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
             return buildTopLevelModuleTree(visible, ctx, () => this._groupByMethod(visible))
         }
 
-        // Method group children — flat list
+        // Method group children - flat list
         if (element instanceof MethodGroupItem) {
             return this._visibleEndpoints()
                 .filter(e => e.method === element.method)
@@ -179,7 +179,7 @@ export class EndpointTreeProvider implements vscode.TreeDataProvider<vscode.Tree
                 ))
         }
 
-        // Module group children — recursive
+        // Module group children - recursive
         if (element instanceof ModuleGroupItem) {
             const scoped = this._visibleEndpoints().filter(e =>
                 endpointBelongsTo(e.path, element.modulePath)

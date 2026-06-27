@@ -1,6 +1,6 @@
 /**
  * smokeTest.ts
- * Run-all Phase 2 — fire saved cases across a module or the whole API surface
+ * Run-all Phase 2 - fire saved cases across a module or the whole API surface
  * and stream pass/fail into a dedicated results panel.
  *
  * Safe by construction: only saved cases run (the dev created them on purpose),
@@ -14,7 +14,7 @@ import { EndpointTreeProvider } from '../explorer/endpointTreeProvider'
 import { CasesStore, TestCase } from '../cases/casesStore'
 import { ConfigManager }        from '../config/configManager'
 import { AuthStore }            from '../auth/authStore'
-import { endpointBelongsTo }    from '../explorer/inferModule'
+import { endpointBelongsTo, inferModulePath } from '../explorer/inferModule'
 import { buildRequestFromCase, executeRequest } from '../request/executeRequest'
 
 const WRITE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE']
@@ -59,7 +59,7 @@ async function runScope(deps: Deps, scope: Scope): Promise<void> {
 
     const all = treeProvider.endpoints
     if (!all.length) {
-        vscode.window.showWarningMessage('Zerk: No endpoints loaded — connect to a server first.')
+        vscode.window.showWarningMessage('Zerk: No endpoints loaded - connect to a server first.')
         return
     }
 
@@ -72,7 +72,7 @@ async function runScope(deps: Deps, scope: Scope): Promise<void> {
     const picks = await vscode.window.showQuickPick<Opt>([
         { label: 'Include GET endpoints without a saved case', _id: 'uncasedGets', picked: true },
         { label: 'Include write methods (POST/PUT/PATCH/DELETE)', _id: 'writeMethods', picked: false },
-    ], { canPickMany: true, title: 'Smoke test — what to include', placeHolder: 'Adjust, then press Enter' })
+    ], { canPickMany: true, title: 'Smoke test - what to include', placeHolder: 'Adjust, then press Enter' })
 
     if (!picks) return
     const includeUncasedGets = picks.some(p => p._id === 'uncasedGets')
@@ -93,14 +93,14 @@ async function runScope(deps: Deps, scope: Scope): Promise<void> {
 
     if (!items.length) {
         vscode.window.showInformationMessage(
-            'Zerk: Nothing to run in scope — no saved cases and no eligible GET endpoints.'
+            'Zerk: Nothing to run in scope - no saved cases and no eligible GET endpoints.'
         )
         return
     }
 
     const writeCount = items.filter(i => WRITE_METHODS.includes(i.endpoint.method)).length
     const confirm = await vscode.window.showWarningMessage(
-        `Fire ${items.length} request(s)${writeCount ? ` (${writeCount} write — may modify data)` : ''} against ${config.baseUrl}?`,
+        `Fire ${items.length} request(s)${writeCount ? ` (${writeCount} write - may modify data)` : ''} against ${config.baseUrl}?`,
         { modal: true }, 'Run'
     )
     if (confirm !== 'Run') return
@@ -120,6 +120,7 @@ async function runScope(deps: Deps, scope: Scope): Promise<void> {
             panel.addRow({
                 method:     item.endpoint.method,
                 path:       item.endpoint.path,
+                modulePath: inferModulePath(item.endpoint.path),
                 caseLabel:  item.caseLabel,
                 status:     r.status,
                 statusText: r.statusText,
@@ -132,6 +133,7 @@ async function runScope(deps: Deps, scope: Scope): Promise<void> {
             panel.addRow({
                 method:     item.endpoint.method,
                 path:       item.endpoint.path,
+                modulePath: inferModulePath(item.endpoint.path),
                 caseLabel:  item.caseLabel,
                 status:     0,
                 statusText: 'error',
@@ -148,7 +150,7 @@ async function runScope(deps: Deps, scope: Scope): Promise<void> {
 // ── Results panel ──────────────────────────────────────────────────────────────
 
 interface ResultRow {
-    method: string; path: string; caseLabel: string
+    method: string; path: string; modulePath: string[]; caseLabel: string
     status: number; statusText: string; elapsed: number; ok: boolean
     body:   string
 }
@@ -186,7 +188,7 @@ class SmokePanel {
     }
 
     start(scope: string, total: number) {
-        this._panel.title = `Smoke Test — ${scope}`
+        this._panel.title = `Smoke Test - ${scope}`
         this._panel.webview.postMessage({ type: 'start', scope, total })
     }
     addRow(row: ResultRow) { this._panel.webview.postMessage({ type: 'row', row }) }
@@ -228,6 +230,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 .dbody{background:#252526;border:1px solid rgba(255,255,255,.08);font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;padding:12px;line-height:1.6;white-space:pre;overflow-x:auto}
 .jk{color:#9cdcfe}.js{color:#ce9178}.jn{color:#b5cea8}.jb{color:#569cd6}
 .empty{color:rgba(204,204,204,.3);font-style:italic;padding:12px 0}
+.fhead{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:11px;font-weight:700;padding:5px 6px;cursor:pointer;margin-top:4px}
+.fhead:hover{background:#252526}
+.fchev{flex-shrink:0;color:rgba(204,204,204,.4);font-size:9px;width:10px}
+.fname{flex:1;color:rgba(204,204,204,.85);text-transform:uppercase;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.froll{flex-shrink:0}.froll.ok{color:#10b981}.froll.bad{color:#f43f5e}
+.ghead{margin-top:6px}
 </style></head><body>
 <div class="head"><div class="title" id="title">Smoke Test</div><div class="summary" id="summary"></div></div>
 <div class="panes">
@@ -239,6 +247,7 @@ const vscode = acquireVsCodeApi()
 const COLORS = { GET:'#10b981', POST:'#3b82f6', PUT:'#f59e0b', PATCH:'#a78bfa', DELETE:'#f43f5e' }
 let total=0, passed=0, failed=0, running=false, selectedId=-1
 const results=[]
+const collapsed=new Set()
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
 function highlight(json){
   return esc(json).replace(/("(\\\\u[a-zA-Z0-9]{4}|\\\\[^u]|[^\\\\"])*"(\\s*:)?|\\b(true|false|null)\\b|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?)/g, m=>{
@@ -251,27 +260,56 @@ function renderSummary(){
     +(failed?' \\u00b7 <span class="fail">'+failed+' failed</span>':'')
     +' \\u00b7 '+ran+'/'+total+(running?' \\u00b7 <span class="run">running\\u2026</span>':' total')
 }
-function renderList(){
-  const groups={}, order=[]
-  results.forEach(r=>{ const k=r.method+' '+r.path; if(!groups[k]){groups[k]=[];order.push(k)} groups[k].push(r) })
+function buildTree(){
+  const root={children:{},order:[],endpoints:{},epOrder:[]}
+  results.forEach(r=>{
+    let node=root
+    ;(r.modulePath||[]).forEach(seg=>{
+      if(!node.children[seg]){ node.children[seg]={children:{},order:[],endpoints:{},epOrder:[]}; node.order.push(seg) }
+      node=node.children[seg]
+    })
+    const ek=r.method+' '+r.path
+    if(!node.endpoints[ek]){ node.endpoints[ek]=[]; node.epOrder.push(ek) }
+    node.endpoints[ek].push(r)
+  })
+  return root
+}
+function rollup(node){
+  let ok=0,total=0
+  node.epOrder.forEach(ek=>node.endpoints[ek].forEach(r=>{ total++; if(r.ok)ok++ }))
+  node.order.forEach(seg=>{ const c=rollup(node.children[seg]); ok+=c.ok; total+=c.total })
+  return {ok,total}
+}
+function toggleFolder(key){ collapsed.has(key)?collapsed.delete(key):collapsed.add(key); renderList() }
+function pad(depth,extra){ return 'padding-left:'+(8+depth*14+(extra||0))+'px' }
+function renderNode(node,pathKey,depth){
   let html=''
-  order.forEach(k=>{
-    const g=groups[k], pass=g.filter(x=>x.ok).length, allok=pass===g.length
-    html+='<div class="group"><div class="ghead">'
+  node.order.slice().sort().forEach(seg=>{
+    const child=node.children[seg], key=pathKey?pathKey+'/'+seg:seg
+    const roll=rollup(child), allok=roll.ok===roll.total, isCol=collapsed.has(key)
+    html+='<div class="fhead" style="'+pad(depth)+'" onclick="toggleFolder(\\''+key+'\\')">'
+      +'<span class="fchev">'+(isCol?'\\u25b6':'\\u25bc')+'</span>'
+      +'<span class="fname">'+esc(seg)+'</span>'
+      +'<span class="froll '+(allok?'ok':'bad')+'">'+roll.ok+'/'+roll.total+'</span></div>'
+    if(!isCol) html+=renderNode(child,key,depth+1)
+  })
+  node.epOrder.forEach(ek=>{
+    const g=node.endpoints[ek], pass=g.filter(x=>x.ok).length, allok=pass===g.length
+    html+='<div class="ghead" style="'+pad(depth)+'">'
       +'<span class="method" style="color:'+(COLORS[g[0].method]||'#ccc')+'">'+esc(g[0].method)+'</span>'
       +'<span class="gpath">'+esc(g[0].path)+'</span>'
       +'<span class="groll '+(allok?'ok':'bad')+'">'+pass+'/'+g.length+'</span></div>'
     g.forEach(r=>{
-      html+='<div class="case-row'+(r.id===selectedId?' sel':'')+'" onclick="select('+r.id+')">'
+      html+='<div class="case-row'+(r.id===selectedId?' sel':'')+'" style="'+pad(depth,18)+'" onclick="select('+r.id+')">'
         +'<span class="mark" style="color:'+(r.ok?'#10b981':'#f43f5e')+'">'+(r.ok?'\\u2713':'\\u2717')+'</span>'
         +'<span class="cname">'+esc(r.caseLabel)+'</span>'
-        +'<span class="cstatus">'+(r.status||'\\u2014')+'</span>'
+        +'<span class="cstatus">'+(r.status||'-')+'</span>'
         +'<span class="cms">'+(r.elapsed||0)+'ms</span></div>'
     })
-    html+='</div>'
   })
-  document.getElementById('list').innerHTML=html
+  return html
 }
+function renderList(){ document.getElementById('list').innerHTML=renderNode(buildTree(),'',0) }
 function select(id){ selectedId=id; renderList(); renderDetail() }
 function renderDetail(){
   const r=results.find(x=>x.id===selectedId), d=document.getElementById('detail')
@@ -281,14 +319,14 @@ function renderDetail(){
     +'<span class="method" style="color:'+(COLORS[r.method]||'#ccc')+'">'+esc(r.method)+'</span>'
     +'<span class="dpath">'+esc(r.path)+'</span><span class="dcase">'+esc(r.caseLabel)+'</span>'
     +'<button class="openbtn" onclick="openSelected()">\\u2197 Open in request panel</button></div>'
-    +'<div class="dmeta '+cls+'">'+(r.status||'\\u2014')+' '+esc(r.statusText||'')+' \\u00b7 '+(r.elapsed||0)+'ms</div>'
+    +'<div class="dmeta '+cls+'">'+(r.status||'-')+' '+esc(r.statusText||'')+' \\u00b7 '+(r.elapsed||0)+'ms</div>'
     +'<div class="dbody">'+highlight(r.body||'')+'</div>'
 }
 function openSelected(){ const r=results.find(x=>x.id===selectedId); if(r) vscode.postMessage({type:'openEndpoint',method:r.method,path:r.path}) }
 window.addEventListener('message', e=>{
   const m=e.data
-  if(m.type==='start'){ total=m.total; passed=0; failed=0; running=true; selectedId=-1; results.length=0
-    document.getElementById('title').textContent='Smoke Test \\u2014 '+m.scope
+  if(m.type==='start'){ total=m.total; passed=0; failed=0; running=true; selectedId=-1; results.length=0; collapsed.clear()
+    document.getElementById('title').textContent='Smoke Test - '+m.scope
     document.getElementById('detail').innerHTML='<div class="empty">Select a result to view its response</div>'
     renderList(); renderSummary() }
   else if(m.type==='row'){ const r=m.row; r.id=results.length; r.ok?passed++:failed++; results.push(r); renderList(); renderSummary() }

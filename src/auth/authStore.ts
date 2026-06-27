@@ -21,7 +21,7 @@ export class AuthStore {
     private _onChange = new vscode.EventEmitter<void>()
     readonly onDidChange: vscode.Event<void> = this._onChange.event
 
-    // In-memory cache — SecretStorage is async so we cache after first load
+    // In-memory cache - SecretStorage is async so we cache after first load
     private _tokens: Map<string, StoredToken> = new Map()
     private _loaded = false
 
@@ -71,7 +71,7 @@ export class AuthStore {
         return this._tokens.get(endpointKey)
     }
 
-    // Returns the best token to use for a request — prefers non-expired ones
+    // Returns the best token to use for a request - prefers non-expired ones
     async getActiveToken(): Promise<StoredToken | undefined> {
         await this.load()
         const all    = [...this._tokens.values()]

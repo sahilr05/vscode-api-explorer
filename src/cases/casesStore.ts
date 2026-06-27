@@ -5,7 +5,7 @@
  *
  * The anti-drift principle: we store ONLY the human's input (body + param
  * values + a name) keyed by "METHOD:path". We never store the schema, URL,
- * or response — those are derived from the live spec at render time. A
+ * or response - those are derived from the live spec at render time. A
  * teammate who pulls this file gets your inputs against their own live spec,
  * so there is nothing to drift out of sync.
  */
@@ -35,7 +35,7 @@ export class CasesStore {
     private _onDidChange = new vscode.EventEmitter<void>()
     readonly onDidChange: vscode.Event<void> = this._onDidChange.event
 
-    // True only when a workspace folder is open — case saving is disabled otherwise.
+    // True only when a workspace folder is open - case saving is disabled otherwise.
     get available(): boolean {
         return !!vscode.workspace.workspaceFolders?.length
     }
@@ -59,7 +59,7 @@ export class CasesStore {
             const parsed = JSON.parse(Buffer.from(bytes).toString('utf8')) as CasesFile
             if (parsed && parsed.cases) this._data = { version: 1, cases: parsed.cases }
         } catch {
-            // File missing or unreadable — start empty, write lazily on first save.
+            // File missing or unreadable - start empty, write lazily on first save.
         }
     }
 
@@ -87,7 +87,7 @@ export class CasesStore {
         return (this._data.cases[endpointKey] ?? []).find(c => c.name === name)
     }
 
-    // Upsert by name — saving a case with an existing name overwrites it.
+    // Upsert by name - saving a case with an existing name overwrites it.
     async save(endpointKey: string, testCase: TestCase): Promise<void> {
         await this._load()
         const existing = this._data.cases[endpointKey] ?? []

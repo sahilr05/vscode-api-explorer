@@ -1,7 +1,7 @@
 /**
  * inferModule.ts
  * Infers the module path from an API endpoint path.
- * Returns an array of segments — supports n-level nesting.
+ * Returns an array of segments - supports n-level nesting.
  *
  * Examples:
  *   /auth/login          → ["auth"]
@@ -32,7 +32,7 @@ export function inferModulePath(path: string): string[] {
 }
 
 /**
- * Returns just the top-level module name — used for filter QuickPick.
+ * Returns just the top-level module name - used for filter QuickPick.
  */
 export function inferModule(path: string): string {
     return inferModulePath(path)[0] ?? "other"

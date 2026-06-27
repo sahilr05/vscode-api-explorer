@@ -29,7 +29,7 @@ export class MethodGroupItem extends vscode.TreeItem {
     constructor(public readonly method: string, count: number) {
         super(method, vscode.TreeItemCollapsibleState.Expanded)
         this.description  = `${count}`
-        this.tooltip      = `${method} — ${count} endpoint${count !== 1 ? "s" : ""}`
+        this.tooltip      = `${method} - ${count} endpoint${count !== 1 ? "s" : ""}`
         this.iconPath     = new vscode.ThemeIcon(
             "symbol-method",
             new vscode.ThemeColor(METHOD_COLORS[method] ?? "foreground")
@@ -38,7 +38,7 @@ export class MethodGroupItem extends vscode.TreeItem {
     }
 }
 
-// ── Module group (recursive — can contain sub-groups or endpoints) ─────────────
+// ── Module group (recursive - can contain sub-groups or endpoints) ─────────────
 
 export class ModuleGroupItem extends vscode.TreeItem {
     constructor(
@@ -48,7 +48,7 @@ export class ModuleGroupItem extends vscode.TreeItem {
     ) {
         super(moduleName, vscode.TreeItemCollapsibleState.Expanded)
         this.description  = `${count}`
-        this.tooltip      = `${moduleName} — ${count} endpoint${count !== 1 ? "s" : ""}`
+        this.tooltip      = `${moduleName} - ${count} endpoint${count !== 1 ? "s" : ""}`
         this.iconPath     = new vscode.ThemeIcon("folder")
         this.contextValue = "moduleGroup"
     }
@@ -110,7 +110,7 @@ export class EndpointItem extends vscode.TreeItem {
             title:     "Open Request",
             arguments: [endpoint],
         }
-        this.contextValue = endpoint.operationId ? "endpointWithSource" : "endpoint"
+        this.contextValue = "endpoint"
     }
 }
 

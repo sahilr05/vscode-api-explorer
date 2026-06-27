@@ -9,7 +9,7 @@ export interface ExtractedToken {
     expiresAt: number | undefined  // Unix timestamp ms, undefined if not JWT or no exp
 }
 
-// Common field names that contain auth tokens — ordered by likelihood
+// Common field names that contain auth tokens - ordered by likelihood
 const TOKEN_FIELDS = [
     'access_token',
     'token',
@@ -77,7 +77,7 @@ export function decodeJwtExpiry(token: string): number | undefined {
             return json.exp * 1000  // convert seconds → ms
         }
     } catch {
-        // Not a JWT or malformed — that's fine
+        // Not a JWT or malformed - that's fine
     }
     return undefined
 }

@@ -97,7 +97,7 @@ export function getRequestContentType(requestBody: any): string | undefined {
 
 /**
  * For form bodies (urlencoded / multipart) we blank out string fields instead
- * of filling dummy values like "string" — sending those would fail server-side
+ * of filling dummy values like "string" - sending those would fail server-side
  * validation (e.g. OAuth2's grant_type pattern). The user fills what they need.
  */
 function buildFormSample(schema: any, components: SchemaComponents): any {

@@ -1,7 +1,7 @@
 /**
  * configPanel.ts
  * Manages the project configuration webview panel.
- * Singleton — only one config panel open at a time.
+ * Singleton - only one config panel open at a time.
  */
 
 import * as vscode       from 'vscode'
@@ -25,7 +25,7 @@ export class ConfigPanel {
 
         const panel = vscode.window.createWebviewPanel(
             'apiExplorerConfig',
-            'Zerk — Project Config',
+            'Zerk - Project Config',
             vscode.ViewColumn.Active,
             { enableScripts: true, retainContextWhenHidden: true }
         )

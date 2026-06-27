@@ -110,7 +110,7 @@ export function renderPanel(
     const bodyHtml = hasBody ? `
         <div class="section">
             <h3 class="section-title">Request Body${isFormBody
-                ? ` <span style="font-weight:400;text-transform:none;letter-spacing:0;color:rgba(204,204,204,.35);font-size:10px">· sent as form (${contentType.replace("application/", "")}) — empty fields are omitted</span>`
+                ? ` <span style="font-weight:400;text-transform:none;letter-spacing:0;color:rgba(204,204,204,.35);font-size:10px">· sent as form (${contentType.replace("application/", "")}) - empty fields are omitted</span>`
                 : ""}</h3>
             <textarea class="code-block" id="requestBody" style="height:140px;resize:vertical;width:100%">${bodyContent}</textarea>
         </div>` : ""
@@ -123,7 +123,7 @@ export function renderPanel(
                 <span id="schemaToggle" style="font-size:10px;color:rgba(204,204,204,.35);font-weight:400;text-transform:none;letter-spacing:0">▼ hide</span>
             </h3>
             <div id="schemaBody">
-                <div class="schema-label">schema preview — read only</div>
+                <div class="schema-label">schema preview - read only</div>
                 <div class="schema-preview">${responseSchema
                     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
                 }</div>
@@ -193,7 +193,7 @@ export function renderPanel(
         <div class="cases-bar" id="casesBar">
             <span class="cases-tag">Cases</span>
             <select id="casesSelect" class="cases-select" onchange="loadCase()" title="Load a saved input set">
-                <option value="">— saved cases —</option>
+                <option value="">- saved cases -</option>
             </select>
             <button class="cases-btn" onclick="saveCase()" title="Save current inputs as a named case">＋ Save current</button>
             <button class="cases-btn cases-del" id="deleteCaseBtn" onclick="deleteCase()" style="display:none" title="Delete selected case">✕</button>

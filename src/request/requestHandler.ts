@@ -58,7 +58,7 @@ export function attachRequestHandler(
                 return
             }
             const name = await vscode.window.showInputBox({
-                title:       `Save test case — ${endpoint.method} ${endpoint.path}`,
+                title:       `Save test case - ${endpoint.method} ${endpoint.path}`,
                 prompt:      'Name this input set (e.g. "valid data", "missing field", "admin token")',
                 placeHolder: 'valid data',
                 validateInput: v => v.trim() ? null : 'Name cannot be empty',
@@ -185,7 +185,7 @@ export function attachRequestHandler(
                 return
             }
 
-            // Write methods can modify data — confirm before replaying.
+            // Write methods can modify data - confirm before replaying.
             if (["POST", "PUT", "PATCH", "DELETE"].includes(endpoint.method)) {
                 const ok = await vscode.window.showWarningMessage(
                     `Fire ${list.length} ${endpoint.method} request(s) against ${config.baseUrl}? This may modify data.`,

@@ -31,7 +31,7 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
     bar.style.display = 'flex'
 
     const current = sel.value
-    sel.innerHTML = '<option value="">— saved cases —</option>' +
+    sel.innerHTML = '<option value="">- saved cases -</option>' +
       _cases.map(c => '<option>' + escHtmlAttr(c.name) + '</option>').join('')
     if (_cases.some(c => c.name === current)) sel.value = current
     updateDeleteBtn()
@@ -125,7 +125,7 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
       return '<div class="run-row ' + (ok ? 'ok' : 'bad') + '" onclick="toggleRunRow(' + i + ')" title="Click to view response">'
         + '<span class="rmark" style="color:' + (ok ? '#10b981' : '#f43f5e') + '">' + (ok ? '✓' : '✗') + '</span>'
         + '<span class="rname">' + escHtmlAttr(r.name) + '</span>'
-        + '<span class="rstatus">' + (r.status || '—') + ' ' + escHtmlAttr(r.statusText || '') + '</span>'
+        + '<span class="rstatus">' + (r.status || '-') + ' ' + escHtmlAttr(r.statusText || '') + '</span>'
         + '<span class="relapsed">' + (r.elapsed || 0) + 'ms</span>'
         + '<span class="rchevron" id="run-chev-' + i + '">▶</span>'
         + '</div>'
@@ -183,7 +183,7 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
     const area = document.getElementById('responseArea')
     const btn  = document.getElementById('sendBtn')
 
-    // Config changed — update auth badge without re-rendering the whole panel
+    // Config changed - update auth badge without re-rendering the whole panel
     if (msg.type === 'configUpdated') {
       const auth  = msg.auth
       const style = AUTH_LABELS[auth?.type] ?? AUTH_LABELS.none
@@ -196,14 +196,14 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
       return
     }
 
-    // Saved cases list arrived — refresh the dropdown without touching the form
+    // Saved cases list arrived - refresh the dropdown without touching the form
     if (msg.type === 'casesList') {
       _cases = msg.cases || []
       renderCases(msg.available)
       return
     }
 
-    // Run-all results arrived — render them in the response area
+    // Run-all results arrived - render them in the response area
     if (msg.type === 'runResults') {
       renderRunResults(msg.results, msg.summary)
       return

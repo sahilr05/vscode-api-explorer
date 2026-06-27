@@ -1,7 +1,7 @@
 /**
  * moduleTree.ts
  * Builds a recursive module tree from a flat list of endpoints.
- * Supports n-level nesting — no hardcoded depth limit.
+ * Supports n-level nesting - no hardcoded depth limit.
  */
 
 import * as vscode      from 'vscode'
@@ -84,7 +84,7 @@ export function buildTopLevelModuleTree(
     const allFlat = endpoints.every(e => inferModulePath(e.path).length === 0)
     if (allFlat) {
         return [
-            new InfoItem("No modules detected — paths have no named segments", "info"),
+            new InfoItem("No modules detected - paths have no named segments", "info"),
             ...fallback()
         ]
     }

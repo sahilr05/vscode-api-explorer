@@ -11,7 +11,6 @@ import { HistoryTreeProvider }  from './history/historyTreeProvider'
 import { AuthStore }            from './auth/authStore'
 import { CasesStore }           from './cases/casesStore'
 import { registerSmokeTest }    from './smoke/smokeTest'
-import { goToSource }           from './navigation/sourceNavigator'
 import { ApiEndpoint }          from './types/endpoint'
 
 const ALL_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
@@ -99,7 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerTreeDataProvider('apiExplorer.history',   histProvider)
 
     // ── Auto-reconnect polling ────────────────────────────────────────────────
-    // Only polls when server is unreachable — stops as soon as connected
+    // Only polls when server is unreachable - stops as soon as connected
     // Interval: 3s. Devs just start their server and the tree populates automatically.
     let _pollTimer:    NodeJS.Timeout | undefined
     let _isConnected = false
@@ -115,10 +114,10 @@ export function activate(context: vscode.ExtensionContext) {
                 _isConnected = true
                 stopPolling()
                 vscode.window.setStatusBarMessage(
-                    `Zerk: Connected — ${endpoints.length} endpoints loaded`, 3000
+                    `Zerk: Connected - ${endpoints.length} endpoints loaded`, 3000
                 )
             } catch {
-                // still offline — keep polling silently
+                // still offline - keep polling silently
             }
         }, 3000)
     }
@@ -217,7 +216,7 @@ export function activate(context: vscode.ExtensionContext) {
             const endpoint: ApiEndpoint = {
                 method:  entry.method,
                 path:    entry.path,
-                summary: `From history — ${entry.status} ${entry.statusText}`,
+                summary: `From history - ${entry.status} ${entry.statusText}`,
             }
             RequestPanel.create(endpoint, context, config, history, treeProvider, authStore, cases, {
                 requestBody:  entry.body,
@@ -237,15 +236,6 @@ export function activate(context: vscode.ExtensionContext) {
                 { modal: true }, 'Clear'
             )
             if (confirm === 'Clear') history.clear()
-        }
-    )
-
-    // ── Source navigation ─────────────────────────────────────────────────────
-    const goToSourceCommand = vscode.commands.registerCommand(
-        'apiExplorer.goToSource',
-        (item: any) => {
-            const endpoint: ApiEndpoint = item?.endpoint ?? item
-            goToSource(endpoint)
         }
     )
 
@@ -313,7 +303,7 @@ export function activate(context: vscode.ExtensionContext) {
             const picked = await vscode.window.showQuickPick(items, {
                 canPickMany:  true,
                 title:        'Filter Endpoints',
-                placeHolder:  'Select to apply — uncheck to remove',
+                placeHolder:  'Select to apply - uncheck to remove',
             })
 
             if (!picked) return
@@ -356,7 +346,6 @@ export function activate(context: vscode.ExtensionContext) {
         searchCommand, clearSearchCommand,
         refreshCommand, changeBaseUrlCommand,
         openRequestCommand, openFromHistoryCommand, clearHistoryCommand,
-        goToSourceCommand,
         groupByMethodCommand, groupByModuleCommand,
         filterMethodCommand, filterModuleCommand,
         toggleSortCommand, filterAndSortCommand,

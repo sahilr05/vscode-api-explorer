@@ -1,10 +1,10 @@
 /**
  * executeRequest.ts
- * Host-side request firing — shared by the request panel handler and "Run all".
+ * Host-side request firing - shared by the request panel handler and "Run all".
  *
  * Keeps the fetch + auth-attach + parse logic in one place (no webview involved),
  * so cases can be replayed headlessly. Intentionally pure: it does NOT prompt,
- * write history, or detect tokens — callers layer that on as needed.
+ * write history, or detect tokens - callers layer that on as needed.
  */
 
 import { ApiEndpoint }   from "../types/endpoint"

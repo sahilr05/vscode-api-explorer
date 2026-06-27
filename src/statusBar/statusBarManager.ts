@@ -21,7 +21,7 @@ export class StatusBarManager {
         )
 
         // Clicking the status bar item triggers the base URL change prompt
-        // then a refresh — registered in extension.ts
+        // then a refresh - registered in extension.ts
         this._item.command = 'apiExplorer.changeBaseUrl'
         this._item.show()
 
@@ -65,7 +65,7 @@ export class StatusBarManager {
             case 'connected':
                 this._item.text    = `$(plug) ${host} · ${this._endpointCount} endpoints`
                 this._item.tooltip = new vscode.MarkdownString(
-                    `**Zerk** — Connected\n\n` +
+                    `**Zerk** - Connected\n\n` +
                     `Base URL: \`${this._config.baseUrl}\`\n\n` +
                     `Click to change base URL`
                 )
@@ -75,7 +75,7 @@ export class StatusBarManager {
             case 'error':
                 this._item.text    = `$(error) Zerk · offline`
                 this._item.tooltip = new vscode.MarkdownString(
-                    `**Zerk** — Could not reach server\n\n` +
+                    `**Zerk** - Could not reach server\n\n` +
                     `Tried: \`${this._config.baseUrl}/openapi.json\`\n\n` +
                     `Click to change base URL`
                 )
