@@ -54,7 +54,7 @@ Open any endpoint and the request is already set up for you:
 
 Fill in a body and parameters, click **＋ Save current**, and name the input set: "valid data", "missing field", "admin token". Reopen the endpoint and pick any saved case to restore those exact inputs.
 
-Cases live in a plain `.api-explorer/cases.json` file in your workspace, so you can **commit them to git and share them with your team** - no separate app, no account. Only *your inputs* are saved (never the schema), so they can't drift out of sync with your API the way a hand-maintained collection does.
+Cases live in a plain `.api-explorer/cases.json` file in your workspace, so you can **commit them to git and share them with your team** - no separate app, no account. Only *the values you type* are saved, never a second copy of your API's structure. The endpoints and their fields always come from your live spec, so they can't drift out of sync the way a hand-maintained collection does.
 
 ![Saved cases on an endpoint](https://raw.githubusercontent.com/sahilr05/zerk/refs/heads/main/images/named-cases.png)
 
