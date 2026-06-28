@@ -112,7 +112,7 @@ export function renderPanel(
             <h3 class="section-title">Request Body${isFormBody
                 ? ` <span style="font-weight:400;text-transform:none;letter-spacing:0;color:rgba(204,204,204,.35);font-size:10px">· sent as form (${contentType.replace("application/", "")}) - empty fields are omitted</span>`
                 : ""}</h3>
-            <textarea class="code-block" id="requestBody" style="height:140px;resize:vertical;width:100%">${bodyContent}</textarea>
+            <textarea class="code-block" id="requestBody" oninput="autoGrow(this)" style="min-height:140px;resize:vertical;width:100%;box-sizing:border-box;overflow-y:hidden">${bodyContent}</textarea>
         </div>` : ""
 
     // ── Expected response schema (read-only hint) ────────────────────────────
@@ -229,7 +229,7 @@ export function renderPanel(
 </div>
 
 <div class="footer">
-    <button class="send-btn" id="sendBtn" onclick="sendRequest()">
+    <button class="send-btn" id="sendBtn" onclick="sendRequest()" title="Send (Cmd/Ctrl+Enter)">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l11 6-11 6V2z"/></svg>
         Send Request
     </button>

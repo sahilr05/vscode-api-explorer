@@ -14,7 +14,28 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
     const el = document.getElementById('restoredResponse')
     if (el) el.innerHTML = highlight(el.textContent || '')
     vscode.postMessage({ type: 'listCases' })
+    autoGrow(document.getElementById('requestBody'))
   })
+
+  // Cmd/Ctrl+Enter fires the request from anywhere in the panel
+  window.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault()
+      sendRequest()
+    }
+  })
+
+  // Grow the request-body textarea to fit its content (so a large schema is not
+  // clipped at a fixed height), capped at ~60% of the viewport then scrolls.
+  // min-height keeps a sensible floor; manual resize still works as an override.
+  function autoGrow(el) {
+    if (!el) return
+    const max = Math.round(window.innerHeight * 0.6)
+    el.style.height = 'auto'
+    const target = Math.min(el.scrollHeight + 2, max)
+    el.style.height = target + 'px'
+    el.style.overflowY = el.scrollHeight + 2 > max ? 'auto' : 'hidden'
+  }
 
   // ── Named test cases ────────────────────────────────────────────────────────
   let _cases = []
@@ -70,7 +91,7 @@ export function getClientScript(endpointPath: string, method: string, baseUrl: s
     if (!c) return
 
     const bodyEl = document.getElementById('requestBody')
-    if (bodyEl && c.body !== undefined) bodyEl.value = c.body
+    if (bodyEl && c.body !== undefined) { bodyEl.value = c.body; autoGrow(bodyEl) }
     document.querySelectorAll('[data-param]').forEach(el => {
       const k = el.getAttribute('data-param')
       if (c.pathParams && k in c.pathParams) el.value = c.pathParams[k]
