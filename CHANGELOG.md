@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.11.0] - 2026-06-30
+
+### Changed
+- **Saved cases are now stored per module** (`.api-explorer/cases/<module>.json`) instead of a single `.api-explorer/cases.json`. A single shared file meant two teammates editing cases for *different* endpoints still collided on a git merge; per-module files keep independent work in independent files. Your existing `cases.json` is migrated automatically the first time you open the project (split into per-module files, then removed), so commit that change. Everyone on a shared repository should update to this version or newer.
+
 ## [0.10.4] - 2026-06-30
 
 ### Improved
