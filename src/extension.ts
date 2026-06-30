@@ -381,11 +381,11 @@ export function activate(context: vscode.ExtensionContext) {
             const epMap = new Map<string, ApiEndpoint>()
             for (const e of treeProvider.endpoints) epMap.set(`${e.method}:${e.path}`, e)
 
-            const pairs:   { endpoint: ApiEndpoint; testCase: TestCase }[] = []
-            const skipped: string[] = []
+            const pairs:     { endpoint: ApiEndpoint; testCase: TestCase }[] = []
+            const unmatched: string[] = []
             for (const [key, list] of Object.entries(readAllCases(folder.uri.fsPath))) {
                 const ep = epMap.get(key)
-                if (!ep) { if (list.length) skipped.push(key); continue }
+                if (!ep) { if (list.length) unmatched.push(key); continue }
                 for (const tc of list) pairs.push({ endpoint: ep, testCase: tc })
             }
 
@@ -395,6 +395,23 @@ export function activate(context: vscode.ExtensionContext) {
                         ? 'Zerk: Connect to your server first, then export.'
                         : 'Zerk: No saved cases to export. Save a case on an endpoint first.'
                 )
+                return
+            }
+
+            // Pre-flight: a known-expired token makes every request 401, which would
+            // bake auth failures into the tests. Block before firing and offer re-login.
+            const activeToken = await authStore.getActiveToken()
+            if (activeToken?.expiresAt && activeToken.expiresAt <= Date.now()) {
+                const mins = Math.max(1, Math.round((Date.now() - activeToken.expiresAt) / 60000))
+                const choice = await vscode.window.showWarningMessage(
+                    `Zerk: Your auth token expired ${mins} minute(s) ago. Re-authenticate before exporting, ` +
+                    `or every request will return 401.`,
+                    'Open Login', 'Cancel'
+                )
+                if (choice === 'Open Login') {
+                    const [m] = activeToken.endpointKey.split(':')
+                    vscode.commands.executeCommand('apiExplorer.openRequest', { method: m, path: activeToken.endpointPath })
+                }
                 return
             }
 
@@ -433,6 +450,31 @@ export function activate(context: vscode.ExtensionContext) {
 
             if (failure) { vscode.window.showErrorMessage('Zerk: ' + failure); return }
 
+            // 5xx responses are server bugs, not stable assertions: skip them, flag loudly.
+            const skipped5xx = fired.filter(f => f.status >= 500)
+            const included   = fired.filter(f => f.status < 500)
+
+            // Auth gate: a single 401/403 can be an intentional negative test, so we only
+            // treat it as broken auth when NOTHING in the run succeeded. Otherwise keep it.
+            const successes = included.filter(f => f.status >= 200 && f.status < 300).length
+            const authFails = included.filter(f => f.status === 401 || f.status === 403).length
+            if (successes === 0 && authFails > 0) {
+                const choice = await vscode.window.showWarningMessage(
+                    `Zerk: No requests succeeded and ${authFails} returned 401/403. Your auth token looks ` +
+                    `expired or missing, so these would be failing tests. Re-authenticate and try again, ` +
+                    `or export anyway if these rejections are intentional.`,
+                    { modal: true }, 'Export anyway'
+                )
+                if (choice !== 'Export anyway') return
+            }
+
+            if (included.length === 0) {
+                vscode.window.showWarningMessage(
+                    'Zerk: Nothing to export - every response was a 5xx server error. Fix those endpoints and retry.'
+                )
+                return
+            }
+
             const target = await vscode.window.showSaveDialog({
                 defaultUri: vscode.Uri.joinPath(folder.uri, 'test_zerk.py'),
                 filters:    { Python: ['py'] },
@@ -441,13 +483,16 @@ export function activate(context: vscode.ExtensionContext) {
             if (!target) return
 
             await vscode.workspace.fs.writeFile(
-                target, Buffer.from(generatePytest(fired, config.baseUrl), 'utf8')
+                target, Buffer.from(generatePytest(included, config.baseUrl), 'utf8')
             )
             await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(target))
 
+            const notes: string[] = []
+            if (skipped5xx.length) notes.push(`${skipped5xx.length} with 5xx server errors`)
+            if (unmatched.length)  notes.push(`${unmatched.length} whose endpoint is not in the current spec`)
             vscode.window.showInformationMessage(
-                `Zerk: Exported ${fired.length} test(s).` +
-                (skipped.length ? ` Skipped ${skipped.length} (endpoint not in current spec).` : '')
+                `Zerk: Exported ${included.length} test(s).` +
+                (notes.length ? ` Skipped ${notes.join(' and ')}.` : '')
             )
         }
     )

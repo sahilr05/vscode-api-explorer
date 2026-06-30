@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.10.4] - 2026-06-30
+
+### Improved
+- **pytest export now guards against bad auth.** If your stored token is expired, export stops before firing and offers to reopen your login endpoint, instead of recording a file full of 401s. After firing, responses that return a 5xx are skipped (and flagged in the summary), and if nothing succeeded while requests came back 401/403 the export aborts with an "Export anyway" override. Legitimate negative tests (a 401/403 or a 422 alongside passing requests) are still captured.
+
 ## [0.10.3] - 2026-06-29
 
 ### Added
